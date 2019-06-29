@@ -24,18 +24,14 @@ const winURL = process.env.NODE_ENV === 'development' ?
   `http://localhost:9080` :
   `file://${__dirname}/index.html`
 
+
 function createWindow() {
-  /**
-   * Initial window options
-   */
-  const appIcon = new Tray(path.join(__static, './icon@3x.png'))
   mainWindow = new BrowserWindow({
     height: 660,
     useContentSize: true,
     width: 1100,
     maximizable: false,
     resizable: false,
-    icon: appIcon,
     show: false,
     center: true,
     vibrancy: 'popover',
@@ -44,12 +40,28 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
   })
-
+  // 托盘
+  const tray = new Tray(path.join(__static, './icon@3x.png'))
+  tray.setToolTip('i古诗词')
   mainWindow.on('closed', () => {
     mainWindow = null
+    tray.destroy()
   })
-  // 菜单
-  // require('../renderer/menu.js')
+  tray.on("click", ()=>{
+    if(mainWindow != null){
+      mainWindow.show()
+    }else{
+      tray.destroy()
+    }
+  })
+  tray.on("drop", ()=>{
+    if(mainWindow != null){
+      mainWindow.show()
+    }else{
+      tray.destroy()
+    }
+  })
+  // 设置菜单
   set_menu()
 }
 
@@ -106,90 +118,90 @@ const show_dialog = (font_name) => {
 
 const set_menu = () => {
   let menus = [{
-      label: app.getName(),
+    label: app.getName(),
+    submenu: [{
+      label: '关于',
+      accelerator: 'ctrl+j',
+      click: function () {
+        let win = new BrowserWindow({
+          width: 300,
+          height: 200
+        })
+        win.loadURL(`file://${__static}/about.html`)
+      }
+    }, {
+      role: 'hide'
+    }, {
+      role: 'hideothers'
+    }, {
+      role: 'unhide'
+    }, {
+      role: 'quit'
+    }]
+  },
+  {
+    label: '设置',
+    submenu: [{
+      label: '更改字体',
+      accelerator: 'ctrl+f',
       submenu: [{
-        label: '关于',
-        accelerator: 'ctrl+j',
+        label: '宋体',
+        accelerator: 'ctrl+shift+s',
         click: function () {
-          let win = new BrowserWindow({
-            width: 300,
-            height: 200
-          })
-          win.loadURL(`file://${__static}/about.html`)
+          const content = JSON.stringify({
+            "__font__": "songti"
+          });
+          fs.writeFileSync(config_url, content);
+          show_dialog("songti")
         }
-      }, {
-        role: 'hide'
-      }, {
-        role: 'hideothers'
-      }, {
-        role: 'unhide'
-      }, {
-        role: 'quit'
-      }]
-    },
-    {
-      label: '设置',
-      submenu: [{
-        label: '更改字体',
-        accelerator: 'ctrl+f',
-        submenu: [{
-            label: '宋体',
-            accelerator: 'ctrl+shift+s',
-            click: function () {
-              const content = JSON.stringify({
-                "__font__": "songti"
-              });
-              fs.writeFileSync(config_url, content);
-              show_dialog("songti")
-            }
-          },
-          {
-            label: '楷体',
-            accelerator: 'ctrl+shift+k',
-            click: function () {
-              const content = JSON.stringify({
-                "__font__": "kaiti"
-              });
-              fs.writeFileSync(config_url, content);
-              show_dialog("kaiti")
-            }
-          },
-          {
-            label: '宋楷',
-            accelerator: 'ctrl+shift+g',
-            click: function () {
-              const content = JSON.stringify({
-                "__font__": "songkai"
-              });
-              fs.writeFileSync(config_url, content);
-              show_dialog("songkai")
-            }
-          },
-          {
-            label: '黑体',
-            accelerator: 'ctrl+shift+h',
-            click: function () {
-              const content = JSON.stringify({
-                "__font__": "heiti"
-              });
-              fs.writeFileSync(config_url, content);
-              show_dialog("heiti")
-            }
-          },
-          {
-            label: 'クレPro',
-            accelerator: 'ctrl+shift+p',
-            click: function () {
-              const content = JSON.stringify({
-                "__font__": "NotoSansCJK"
-              });
-              fs.writeFileSync(config_url, content);
-              show_dialog("NotoSansCJK")
-            }
-          }
-        ]
-      }, ]
-    }
+      },
+      {
+        label: '楷体',
+        accelerator: 'ctrl+shift+k',
+        click: function () {
+          const content = JSON.stringify({
+            "__font__": "kaiti"
+          });
+          fs.writeFileSync(config_url, content);
+          show_dialog("kaiti")
+        }
+      },
+      {
+        label: '宋楷',
+        accelerator: 'ctrl+shift+g',
+        click: function () {
+          const content = JSON.stringify({
+            "__font__": "songkai"
+          });
+          fs.writeFileSync(config_url, content);
+          show_dialog("songkai")
+        }
+      },
+      {
+        label: '黑体',
+        accelerator: 'ctrl+shift+h',
+        click: function () {
+          const content = JSON.stringify({
+            "__font__": "heiti"
+          });
+          fs.writeFileSync(config_url, content);
+          show_dialog("heiti")
+        }
+      },
+      {
+        label: 'クレPro',
+        accelerator: 'ctrl+shift+p',
+        click: function () {
+          const content = JSON.stringify({
+            "__font__": "NotoSansCJK"
+          });
+          fs.writeFileSync(config_url, content);
+          show_dialog("NotoSansCJK")
+        }
+      }
+      ]
+    },]
+  }
   ]
 
   let m = Menu.buildFromTemplate(menus)
