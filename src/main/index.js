@@ -127,8 +127,8 @@ const set_menu = () => {
       accelerator: 'ctrl+j',
       click: function () {
         let win = new BrowserWindow({
-          width: 300,
-          height: 200
+          width: 350,
+          height: 250
         })
         win.loadURL(`file://${__static}/about.html`)
       }
