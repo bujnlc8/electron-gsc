@@ -46,6 +46,7 @@
       <el-container>
         <!---右半部分开始-->
         <el-main v-if="current_gsc" style="margin-top:-10px;">
+          <div id="mycapture">
           <el-row class="content">
             <el-col :span="24">
               <div style="text-align:center;font-size:1.3em;"><label @click="search_word(current_gsc.work_title)">{{current_gsc.work_title}}</label></div>
@@ -56,12 +57,6 @@
               <div
                 style="text-align:center;font-size:1.2em;"
               >[{{current_gsc.work_dynasty}}] <label @click="search_word(current_gsc.work_author)">{{current_gsc.work_author}}</label></div>
-            </el-col>
-          </el-row>
-          <el-row v-if="current_gsc.audio_id > 0 && current_gsc.content.length > 300">
-             <el-col :span="24">
-                  <aplayer preload="none" theme="#b7daff" :music="musicList" listMaxHeight="1">
-                </aplayer>
             </el-col>
           </el-row>
           <el-row class="content" v-if="current_gsc.foreword != ''">
@@ -79,7 +74,8 @@
               ></div>
             </el-col>
           </el-row>
-          <el-row v-if="current_gsc.audio_id > 0 && current_gsc.content.length <= 300">
+          </div>
+          <el-row v-if="current_gsc.audio_id > 0">
              <el-col :span="24">
                   <aplayer preload="none" theme="#b7daff" :music="musicList" listmaxheight="1">
                 </aplayer>
@@ -101,8 +97,9 @@
 import { ApiUrl } from "../api.js";
 import Aplayer from 'vue-aplayer'
 import { throws } from 'assert';
+import html2canvas from 'html2canvas'
 const {remote, ipcRenderer} = require('electron')
-const {Menu, MenuItem, clipboard, BrowserWindow} = remote;
+const {Menu, MenuItem, clipboard, BrowserWindow, nativeImage} = remote;
 const menu = new Menu()
 menu.append(
   new MenuItem({
@@ -192,6 +189,14 @@ menu.append(
       win.loadURL('https://www.baidu.com/s?wd={0}'.format(selectedText))
     }
   }));
+  menu.append(new MenuItem({type: 'separator'}))
+  menu.append(
+  new MenuItem({
+    label: "截图保存",
+    click: function(){
+      ipcRenderer.send("capture_content", 0)
+    }
+  }));
   window.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         menu.popup({window: remote.getCurrentWindow()})
@@ -206,8 +211,20 @@ export default {
       loading: false,
       current_gsc: null,
       musicList: null,
-      activeName: ''
+      activeName: '',
+      imgsrc: ''
     };
+  },
+  mounted(){
+    ipcRenderer.on("capture_content",(event, message)=>{
+    html2canvas(document.getElementById('mycapture'), {backgroundColor: "#FFFCEC"}).then(canvas=>{
+      //this.imgsrc = canvas.toDataURL('image/png')
+      let data_url = canvas.toDataURL('image/png')
+      let native_img = nativeImage.createFromDataURL(data_url)
+      clipboard.writeImage(native_img)
+      this.show_notify("success", "提醒", "图片已经复制到剪贴板")
+    });
+  })
   },
   methods: {
     search_word(word){

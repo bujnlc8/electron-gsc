@@ -66,8 +66,14 @@ function createWindow() {
   set_menu()
 }
 
+// 右键按钮
 ipcMain.on("copy_and_search", (event, arg, arg1) => {
   mainWindow.webContents.send('copy_and_search', arg, arg1);
+})
+
+// 截图
+ipcMain.on("capture_content", (event, arg) => {
+  mainWindow.webContents.send('capture_content', arg);
 })
 
 app.on('ready', createWindow)
