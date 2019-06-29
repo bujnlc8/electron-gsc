@@ -121,7 +121,7 @@ const show_dialog = (font_name) => {
 
 const set_menu = () => {
   let menus = [{
-    label: app.getName(),
+    label: "i古诗词",
     submenu: [{
       label: '关于',
       accelerator: 'ctrl+j',
