@@ -79,12 +79,15 @@ app.on('activate', () => {
   }
 })
 
-systemPreferences.subscribeNotification(
-  'AppleInterfaceThemeChangedNotification',
-  function theThemeHasChanged() {
-    updateMyAppTheme(systemPreferences.isDarkMode())
-  }
-)
+// 只有在mac才有效
+if (process.platform === 'darwin') {
+  systemPreferences.subscribeNotification(
+    'AppleInterfaceThemeChangedNotification',
+    function theThemeHasChanged() {
+      updateMyAppTheme(systemPreferences.isDarkMode())
+    }
+  )
+}
 
 /**
  * Auto Updater
