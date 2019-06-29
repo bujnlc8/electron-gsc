@@ -1,6 +1,9 @@
-# igsc
+# i古诗词基于electron的mac客户端。
 
-> 提供古诗词查询及朗诵
+> 主要提供古诗词查询及朗诵。
+
+> 另见小程序`i古诗词`：
+> <img alt="i古诗词小程序码" src="https://i.loli.net/2018/11/11/5be80d00518d4.jpg" width="200">
 
 #### Build Setup
 
@@ -13,14 +16,6 @@ npm run dev
 
 # build electron application for production
 npm run build
-
-# run unit & end-to-end tests
-npm test
-
-
-# lint all JS/Vue component files in `src/`
-npm run lint
-
 ```
 
 ---
