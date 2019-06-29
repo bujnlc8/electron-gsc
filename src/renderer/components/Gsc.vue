@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-container style="height: 600px;">
+    <el-container :style="container_style">
       <el-aside width="480px">
         <el-row>
           <el-col :span="19">
@@ -212,7 +212,8 @@ export default {
       current_gsc: null,
       musicList: null,
       activeName: '',
-      imgsrc: ''
+      imgsrc: '',
+      container_style: {"height": "626px"}
     };
   },
   mounted(){
@@ -367,6 +368,9 @@ export default {
     }
   },
   created() {
+    if(process.platform == 'win32'){
+      this.container_style = {"height": "600px"}
+    }
     this.search();
     ipcRenderer.on("copy_and_search", (evnet, message, arg1)=>{
       if(arg1 == 0 || arg1 == 2){
