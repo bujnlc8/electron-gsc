@@ -60,7 +60,7 @@
           </el-row>
           <el-row v-if="current_gsc.audio_id > 0 && current_gsc.content.length > 300">
              <el-col :span="24">
-                  <aplayer preload="none" theme="#b7daff" :music="musicList" listmaxheight="1">
+                  <aplayer preload="none" theme="#b7daff" :music="musicList" listMaxHeight="1">
                 </aplayer>
             </el-col>
           </el-row>
@@ -206,8 +206,9 @@ export default {
             this.current_gsc = this.do_content(d.data.data);
             this.musicList = {
                 title: this.current_gsc.work_title,
-                author: this.current_gsc.work_author,
-                url: 'https://songci.nos-eastchina1.126.net/audio/{0}.m4a'.format(this.current_gsc.audio_id)
+                artist: this.current_gsc.work_author,
+                src: 'https://songci.nos-eastchina1.126.net/audio/{0}.m4a'.format(this.current_gsc.audio_id),
+                pic: 'https://qcloudtest-1256650966.cos.ap-guangzhou.myqcloud.com/avatar.jpeg'
             }
             if(this.current_gsc.intro){
                 this.activeName = "intro"

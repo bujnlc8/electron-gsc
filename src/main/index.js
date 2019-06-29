@@ -1,23 +1,28 @@
 'use strict'
 
-import { app, BrowserWindow, systemPreferences, Tray, Menu, dialog, nativeImage } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  systemPreferences,
+  Tray,
+  Menu,
+  dialog,
+  nativeImage
+} from 'electron'
+
+if (process.env.NODE_ENV !== 'development') {
+  global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
+}
+
 const path = require("path")
 const fs = require("fs")
 let config_url = path.join(__static, './localConfig.json')
 const image = nativeImage.createFromPath(path.join(__static, './icon@3x.png'))
 
-/**
- * Set `__static` path to static files in production
- * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
- */
-if (process.env.NODE_ENV !== 'development') {
-  global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
-}
-
 let mainWindow
-const winURL = process.env.NODE_ENV === 'development'
-  ? `http://localhost:9080`
-  : `file://${__dirname}/index.html`
+const winURL = process.env.NODE_ENV === 'development' ?
+  `http://localhost:9080` :
+  `file://${__dirname}/index.html`
 
 function createWindow() {
   /**
@@ -30,10 +35,15 @@ function createWindow() {
     width: 1100,
     maximizable: false,
     resizable: false,
-    icon: appIcon
+    icon: appIcon,
+    show: false,
+    center: true,
+    vibrancy: 'popover',
   })
-
   mainWindow.loadURL(winURL)
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show()
+  })
 
   mainWindow.on('closed', () => {
     mainWindow = null
@@ -46,10 +56,9 @@ function createWindow() {
 app.on('ready', createWindow)
 
 app.on('window-all-closed', () => {
-  // if (process.platform !== 'darwin') {
-  //   app.quit()
-  // }
-  app.quit()
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
 })
 
 app.on('activate', () => {
@@ -97,70 +106,90 @@ const show_dialog = (font_name) => {
 
 const set_menu = () => {
   let menus = [{
-    label: '关于',
-    submenu: [{
-      label: 'i古诗词',
-      accelerator: 'ctrl+j',
-      click: function () {
-        let win = new BrowserWindow({
-          width: 300,
-          height: 200
-        })
-        win.loadURL(`file://${__static}/about.html`)
-      }
+      label: app.getName(),
+      submenu: [{
+        label: '关于',
+        accelerator: 'ctrl+j',
+        click: function () {
+          let win = new BrowserWindow({
+            width: 300,
+            height: 200
+          })
+          win.loadURL(`file://${__static}/about.html`)
+        }
+      }, {
+        role: 'hide'
+      }, {
+        role: 'hideothers'
+      }, {
+        role: 'unhide'
+      }, {
+        role: 'quit'
+      }]
     },
     {
-      label: '更改字体',
-      accelerator: 'ctrl+f',
-      submenu: [
-        {
-          label: '宋体',
-          accelerator: 'ctrl+shift+s',
-          click: function () {
-            const content = JSON.stringify({ "__font__": "songti" });
-            fs.writeFileSync(config_url, content);
-            show_dialog("songti")
+      label: '设置',
+      submenu: [{
+        label: '更改字体',
+        accelerator: 'ctrl+f',
+        submenu: [{
+            label: '宋体',
+            accelerator: 'ctrl+shift+s',
+            click: function () {
+              const content = JSON.stringify({
+                "__font__": "songti"
+              });
+              fs.writeFileSync(config_url, content);
+              show_dialog("songti")
+            }
+          },
+          {
+            label: '楷体',
+            accelerator: 'ctrl+shift+k',
+            click: function () {
+              const content = JSON.stringify({
+                "__font__": "kaiti"
+              });
+              fs.writeFileSync(config_url, content);
+              show_dialog("kaiti")
+            }
+          },
+          {
+            label: '宋楷',
+            accelerator: 'ctrl+shift+g',
+            click: function () {
+              const content = JSON.stringify({
+                "__font__": "songkai"
+              });
+              fs.writeFileSync(config_url, content);
+              show_dialog("songkai")
+            }
+          },
+          {
+            label: '黑体',
+            accelerator: 'ctrl+shift+h',
+            click: function () {
+              const content = JSON.stringify({
+                "__font__": "heiti"
+              });
+              fs.writeFileSync(config_url, content);
+              show_dialog("heiti")
+            }
+          },
+          {
+            label: 'クレPro',
+            accelerator: 'ctrl+shift+p',
+            click: function () {
+              const content = JSON.stringify({
+                "__font__": "NotoSansCJK"
+              });
+              fs.writeFileSync(config_url, content);
+              show_dialog("NotoSansCJK")
+            }
           }
-        },
-        {
-          label: '楷体',
-          accelerator: 'ctrl+shift+k',
-          click: function () {
-            const content = JSON.stringify({ "__font__": "kaiti" });
-            fs.writeFileSync(config_url, content);
-            show_dialog("kaiti")
-          }
-        },
-        {
-          label: '宋楷',
-          accelerator: 'ctrl+shift+g',
-          click: function () {
-            const content = JSON.stringify({ "__font__": "songkai" });
-            fs.writeFileSync(config_url, content);
-            show_dialog("songkai")
-          }
-        },
-        {
-          label: '黑体',
-          accelerator: 'ctrl+shift+h',
-          click: function () {
-            const content = JSON.stringify({ "__font__": "heiti" });
-            fs.writeFileSync(config_url, content);
-            show_dialog("heiti")
-          }
-        },
-        {
-          label: 'クレPro',
-          accelerator: 'ctrl+shift+p',
-          click: function () {
-            const content = JSON.stringify({ "__font__": "NotoSansCJK" });
-            fs.writeFileSync(config_url, content);
-            show_dialog("NotoSansCJK")
-          }
-        }]
-    },
-    ]
-  }
+        ]
+      }, ]
+    }
   ]
 
   let m = Menu.buildFromTemplate(menus)

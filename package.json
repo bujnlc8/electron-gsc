@@ -2,8 +2,8 @@
   "name": "igsc",
   "version": "0.0.1",
   "author": "haihuiling2014@gmail.com",
-  "description": "提供古诗词查询及朗诵",
-  "license": null,
+  "description": "主要提供古诗词查询及朗诵",
+  "license": "MIT",
   "main": "./dist/electron/main.js",
   "scripts": {
     "build": "node .electron-vue/build.js && electron-builder",
