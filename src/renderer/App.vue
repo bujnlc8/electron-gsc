@@ -58,11 +58,32 @@ export default {
   font-family: "heiti";
   src: url("assets/SourceHanSansCN-Regular.otf");
 }
+
+.el-button--primary, .el-input__inner, .aplayer-info{
+  font-family: "songti";
+}
+
+.el-tabs__item.is-active{
+  color: #bb7e7e !important;
+  font-weight: 700;
+  font-size: 1.1em;
+}
+.el-tabs__item:hover{
+  color: #bb7e7e !important;
+}
+/*tab激活样式*/
+.el-tabs__active-bar{
+  background-color: #bb7e7e !important;
+  height: 2.5px !important;
+}
+[element-loading-spinner='el-icon-loading']{
+  width: 95px !important;
+}
+
 /*美化滚动条*/
 ::-webkit-scrollbar {
-width: 2px;
-height: 2px;
-background-color: #F5F5F5;
+width: 0px;
+height: 0px;
 }
 /*定义滚动条轨道 内阴影+圆角*/
 ::-webkit-scrollbar-track {

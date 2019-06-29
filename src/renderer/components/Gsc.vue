@@ -1,13 +1,13 @@
 <template>
   <div>
-    <el-container style="height: 610px;">
+    <el-container style="height: 600px;">
       <el-aside width="480px">
         <el-row>
           <el-col :span="19">
             <el-input v-model="input" prefix-icon="el-icon-search" @keyup.enter.native="search" clearable placeholder="请输入内容"></el-input>
           </el-col>
           <el-col :span="4" v-loading="loading" element-loading-spinner="el-icon-loading">
-            <el-button type="primary" icon="el-icon-right" @click="search">搜索</el-button>
+            <el-button type="primary" round icon="el-icon-right" @click="search">搜索</el-button>
           </el-col>
         </el-row>
         <el-row style="margin-top:1rem;" v-if="gscs.length > 0">
@@ -46,7 +46,7 @@
       <el-container>
         <!---右半部分开始-->
         <el-main v-if="current_gsc" style="margin-top:-10px;">
-          <div id="mycapture">
+          <div id="mycapture" style="padding:1.5em 2em;">
           <el-row class="content">
             <el-col :span="24">
               <div style="text-align:center;font-size:1.3em;"><label @click="search_word(current_gsc.work_title)">{{current_gsc.work_title}}</label></div>
@@ -394,6 +394,7 @@ export default {
   border: 0.5px dashed #bb7e7e;
   margin-top: 0.5rem;
   opacity: 0.5;
+  margin-right: 1em;
 }
 .indent {
   text-align: left;
