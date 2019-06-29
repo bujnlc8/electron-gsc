@@ -7,7 +7,8 @@ import {
   Tray,
   Menu,
   dialog,
-  nativeImage
+  nativeImage,
+  ipcMain
 } from 'electron'
 
 if (process.env.NODE_ENV !== 'development') {
@@ -47,23 +48,27 @@ function createWindow() {
     mainWindow = null
     tray.destroy()
   })
-  tray.on("click", ()=>{
-    if(mainWindow != null){
+  tray.on("click", () => {
+    if (mainWindow != null) {
       mainWindow.show()
-    }else{
+    } else {
       tray.destroy()
     }
   })
-  tray.on("drop", ()=>{
-    if(mainWindow != null){
+  tray.on("drop", () => {
+    if (mainWindow != null) {
       mainWindow.show()
-    }else{
+    } else {
       tray.destroy()
     }
   })
   // 设置菜单
   set_menu()
 }
+
+ipcMain.on("copy_and_search", (event, arg, arg1) => {
+  mainWindow.webContents.send('copy_and_search', arg, arg1);
+})
 
 app.on('ready', createWindow)
 
@@ -89,122 +94,111 @@ if (process.platform === 'darwin') {
   )
 }
 
-/**
- * Auto Updater
- *
- * Uncomment the following code below and install `electron-updater` to
- * support auto updating. Code Signing with a valid certificate is required.
- * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-electron-builder.html#auto-updating
- */
-
-/*
-import { autoUpdater } from 'electron-updater'
-
-autoUpdater.on('update-downloaded', () => {
-  autoUpdater.quitAndInstall()
-})
-
-app.on('ready', () => {
-  if (process.env.NODE_ENV === 'production') autoUpdater.checkForUpdates()
-})
- */
-
 const show_dialog = (font_name) => {
   dialog.showMessageBox({
     type: "info",
-    message: "字体更换完可能需要重启应用才能生效哦～",
-    icon: image,
+    message: "可能需要重启应用才能生效哦～",
+    icon: image
   });
   // 发送更换字体给渲染进程
   mainWindow.webContents.send('change-font', font_name);
 }
 
+
 const set_menu = () => {
   let menus = [{
-    label: "i古诗词",
-    submenu: [{
-      label: '关于',
-      accelerator: 'ctrl+j',
-      click: function () {
-        let win = new BrowserWindow({
-          width: 350,
-          height: 250
-        })
-        win.loadURL(`file://${__static}/about.html`)
-      }
-    }, {
-      role: 'hide'
-    }, {
-      role: 'hideothers'
-    }, {
-      role: 'unhide'
-    }, {
-      role: 'quit'
-    }]
-  },
-  {
-    label: '设置',
-    submenu: [{
-      label: '更改字体',
-      accelerator: 'ctrl+f',
+      label: "i古诗词",
       submenu: [{
-        label: '宋体',
-        accelerator: 'ctrl+shift+s',
+        label: '关于',
+        accelerator: 'ctrl+j',
         click: function () {
-          const content = JSON.stringify({
-            "__font__": "songti"
-          });
-          fs.writeFileSync(config_url, content);
-          show_dialog("songti")
+          let win = new BrowserWindow({
+            width: 350,
+            height: 250
+          })
+          win.loadURL(`file://${__static}/about.html`)
         }
-      },
-      {
-        label: '楷体',
-        accelerator: 'ctrl+shift+k',
-        click: function () {
-          const content = JSON.stringify({
-            "__font__": "kaiti"
-          });
-          fs.writeFileSync(config_url, content);
-          show_dialog("kaiti")
-        }
-      },
-      {
-        label: '宋楷',
-        accelerator: 'ctrl+shift+g',
-        click: function () {
-          const content = JSON.stringify({
-            "__font__": "songkai"
-          });
-          fs.writeFileSync(config_url, content);
-          show_dialog("songkai")
-        }
-      },
-      {
-        label: '黑体',
-        accelerator: 'ctrl+shift+h',
-        click: function () {
-          const content = JSON.stringify({
-            "__font__": "heiti"
-          });
-          fs.writeFileSync(config_url, content);
-          show_dialog("heiti")
-        }
-      },
-      {
-        label: 'クレPro',
-        accelerator: 'ctrl+shift+p',
-        click: function () {
-          const content = JSON.stringify({
-            "__font__": "NotoSansCJK"
-          });
-          fs.writeFileSync(config_url, content);
-          show_dialog("NotoSansCJK")
-        }
-      }
-      ]
-    },]
-  }
+      }, {
+        role: 'cut'
+      }, {
+        role: 'copy'
+      }, {
+        role: 'paste'
+      }, {
+        role: 'selectall'
+      }, {
+        role: 'hide'
+      }, {
+        role: 'hideothers'
+      }, {
+        role: 'unhide'
+      }, {
+        role: 'quit'
+      }]
+    },
+    {
+      label: '设置',
+      submenu: [{
+        label: '更改字体',
+        accelerator: 'ctrl+f',
+        submenu: [{
+            label: '宋体',
+            accelerator: 'ctrl+shift+s',
+            click: function () {
+              const content = JSON.stringify({
+                "__font__": "songti"
+              });
+              fs.writeFileSync(config_url, content);
+              show_dialog("songti")
+            }
+          },
+          {
+            label: '楷体',
+            accelerator: 'ctrl+shift+k',
+            click: function () {
+              const content = JSON.stringify({
+                "__font__": "kaiti"
+              });
+              fs.writeFileSync(config_url, content);
+              show_dialog("kaiti")
+            }
+          },
+          {
+            label: '宋楷',
+            accelerator: 'ctrl+shift+g',
+            click: function () {
+              const content = JSON.stringify({
+                "__font__": "songkai"
+              });
+              fs.writeFileSync(config_url, content);
+              show_dialog("songkai")
+            }
+          },
+          {
+            label: '黑体',
+            accelerator: 'ctrl+shift+h',
+            click: function () {
+              const content = JSON.stringify({
+                "__font__": "heiti"
+              });
+              fs.writeFileSync(config_url, content);
+              show_dialog("heiti")
+            }
+          },
+          {
+            label: 'クレPro',
+            accelerator: 'ctrl+shift+p',
+            click: function () {
+              const content = JSON.stringify({
+                "__font__": "NotoSansCJK"
+              });
+              fs.writeFileSync(config_url, content);
+              show_dialog("NotoSansCJK")
+            }
+          }
+        ]
+      }, ]
+    }
   ]
 
   let m = Menu.buildFromTemplate(menus)

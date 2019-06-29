@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-container style="height: 600px;">
+    <el-container style="height: 610px;">
       <el-aside width="480px">
         <el-row>
           <el-col :span="19">
@@ -100,6 +100,103 @@
 <script>
 import { ApiUrl } from "../api.js";
 import Aplayer from 'vue-aplayer'
+import { throws } from 'assert';
+const {remote, ipcRenderer} = require('electron')
+const {Menu, MenuItem, clipboard, BrowserWindow} = remote;
+const menu = new Menu()
+menu.append(
+  new MenuItem({
+    label: "复制",
+    click: function(){
+      let selectionObj = window.getSelection();
+      let selectedText = selectionObj.toString();
+      if(selectedText.length > 0){
+         clipboard.writeText(selectedText)
+         ipcRenderer.send("copy_and_search", selectedText, 0)
+      }
+    }
+  }));
+  menu.append(new MenuItem({type: 'separator'}))
+  menu.append(
+  new MenuItem({
+    label: "搜索",
+    click: function(){
+      let selectionObj = window.getSelection();
+      let selectedText = selectionObj.toString();
+      if(selectedText.length >0){
+        ipcRenderer.send("copy_and_search", selectedText, 1)
+      }
+    }
+  }));
+  menu.append(new MenuItem({type: 'separator'}))
+  menu.append(
+  new MenuItem({
+    label: "复制搜索",
+    click: function(){
+      let selectionObj = window.getSelection();
+      let selectedText = selectionObj.toString();
+      if(selectedText.length > 0){
+      clipboard.writeText(selectedText)
+      ipcRenderer.send("copy_and_search", selectedText, 2)
+      }
+    }
+  }));
+  menu.append(new MenuItem({type: 'separator'}))
+  menu.append(
+  new MenuItem({
+    label: "谷歌搜索",
+    click: function(){
+      let selectionObj = window.getSelection();
+      let selectedText = selectionObj.toString();
+      if(selectedText.length<=0){
+        return
+      }
+      let win = new BrowserWindow({
+        width: 1000,
+        height: 800,
+      })
+      win.loadURL('https://www.google.com/search?q={0}'.format(selectedText))
+    }
+  }));
+  menu.append(new MenuItem({type: 'separator'}))
+  menu.append(
+  new MenuItem({
+    label: "维基百科",
+    click: function(){
+      let selectionObj = window.getSelection();
+      let selectedText = selectionObj.toString();
+      if(selectedText.length<=0){
+        return
+      }
+      let win = new BrowserWindow({
+        width: 1000,
+        height: 800,
+      })
+      win.loadURL('https://zh.wikipedia.org/w/index.php?search={0}'.format(selectedText))
+    }
+  }));
+  menu.append(new MenuItem({type: 'separator'}))
+  menu.append(
+  new MenuItem({
+    label: "百度搜索",
+    click: function(){
+      let selectionObj = window.getSelection();
+      let selectedText = selectionObj.toString();
+      if(selectedText.length<=0){
+        return
+      }
+      let win = new BrowserWindow({
+        width: 1000,
+        height: 800,
+      })
+      win.loadURL('https://www.baidu.com/s?wd={0}'.format(selectedText))
+    }
+  }));
+  window.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        menu.popup({window: remote.getCurrentWindow()})
+  }, false)
+
 export default {
   components: {Aplayer},
   data() {
@@ -159,12 +256,34 @@ export default {
         gsc_obj.intro = gsc_obj.intro.replace(/\t/g, "</br>&emsp;&emsp;");
       return gsc_obj;
     },
-    show_notify(title = "Oops", message = "服务器开小差啦~") {
+    show_notify(t = "error", title = "Oops", message = "服务器开小差啦~") {
+      if(t == "error"){
       this.$notify.error({
         title: title,
-        duration: 1000,
+        duration: 1500,
         message: message
       });
+      }else if(t=="info"){
+        this.$notify.info({
+        title: title,
+        duration: 1500,
+        message: message
+      });
+      }else if(t=="success"){
+        this.$notify({
+        title: title,
+        duration: 1500,
+        message: message,
+        type: "success"
+      });
+      }else if(t=="warning"){
+        this.$notify({
+        title: title,
+        duration: 1500,
+        message: message,
+        type: "warning"
+      });
+      }
     },
     search() {
       let url = ApiUrl.home;
@@ -232,6 +351,14 @@ export default {
   },
   created() {
     this.search();
+    ipcRenderer.on("copy_and_search", (evnet, message, arg1)=>{
+      if(arg1 == 0 || arg1 == 2){
+          this.show_notify("success", "提醒", "已经复制到剪贴板")
+      }
+      if(arg1 == 1 || arg1 == 2){
+          this.search_word(message)
+      }
+    })
   }
 };
 </script>
