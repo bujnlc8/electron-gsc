@@ -4,9 +4,9 @@
       <el-aside width="480px">
         <el-row>
           <el-col :span="19">
-            <el-input v-model="input" prefix-icon="el-icon-search" @keyup.enter.native="search" clearable placeholder="请输入内容"></el-input>
+            <el-input element-loading-text="拼命搜索中" v-loading="loading" element-loading-spinner="el-icon-loading" v-model="input" prefix-icon="el-icon-search" @keyup.enter.native="search" clearable placeholder="请输入内容"></el-input>
           </el-col>
-          <el-col :span="4" v-loading="loading" element-loading-spinner="el-icon-loading">
+          <el-col :span="4">
             <el-button type="primary" round icon="el-icon-right" @click="search">搜索</el-button>
           </el-col>
         </el-row>
@@ -28,7 +28,7 @@
                 <img
                   src="../assets/sound.png"
                   v-if="gsc.audio_id > 0"
-                  style="width:2em;height:2em;">
+                  style="width:1em;height:1em;">
               </div>
             </el-col>
           </el-row>

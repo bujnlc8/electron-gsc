@@ -41,6 +41,14 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
   })
+  // 设置style
+  mainWindow.webContents.on('did-finish-load', () => {
+    if (process.platform === "darwin") {
+      mainWindow.webContents.send('change-style', systemPreferences.isDarkMode())
+    } else {
+      mainWindow.webContents.send('change-style', false)
+    }
+  })
   // 托盘
   const tray = new Tray(path.join(__static, './icon@3x.png'))
   tray.setToolTip('i古诗词')
@@ -90,16 +98,15 @@ app.on('activate', () => {
   }
 })
 
-// 只有在mac才有效
+// 监听黑暗模式切换
 if (process.platform === 'darwin') {
   systemPreferences.subscribeNotification(
     'AppleInterfaceThemeChangedNotification',
     function theThemeHasChanged() {
-      updateMyAppTheme(systemPreferences.isDarkMode())
+      mainWindow.webContents.send('change-style', systemPreferences.isDarkMode());
     }
   )
 }
-
 const show_dialog = (font_name) => {
   dialog.showMessageBox({
     type: "info",
@@ -145,65 +152,83 @@ const set_menu = () => {
     {
       label: '设置',
       submenu: [{
-        label: '更改字体',
-        accelerator: 'ctrl+f',
-        submenu: [{
-            label: '宋体',
-            accelerator: 'ctrl+shift+s',
+          label: '显示切换',
+          accelerator: 'ctrl+m',
+          submenu: [{
+            label: "暗黑",
+            accelerator: 'ctrl+shift+b',
             click: function () {
-              const content = JSON.stringify({
-                "__font__": "songti"
-              });
-              fs.writeFileSync(config_url, content);
-              show_dialog("songti")
+              mainWindow.webContents.send('change-style', true);
             }
-          },
-          {
-            label: '楷体',
-            accelerator: 'ctrl+shift+k',
+          }, {
+            label: "明黄",
+            accelerator: 'ctrl+shift+y',
             click: function () {
-              const content = JSON.stringify({
-                "__font__": "kaiti"
-              });
-              fs.writeFileSync(config_url, content);
-              show_dialog("kaiti")
+              mainWindow.webContents.send('change-style', false);
             }
-          },
-          {
-            label: '宋楷',
-            accelerator: 'ctrl+shift+g',
-            click: function () {
-              const content = JSON.stringify({
-                "__font__": "songkai"
-              });
-              fs.writeFileSync(config_url, content);
-              show_dialog("songkai")
+          }]
+        },
+        {
+          label: '更改字体',
+          accelerator: 'ctrl+f',
+          submenu: [{
+              label: '宋体',
+              accelerator: 'ctrl+shift+s',
+              click: function () {
+                const content = JSON.stringify({
+                  "__font__": "songti"
+                });
+                fs.writeFileSync(config_url, content);
+                show_dialog("songti")
+              }
+            },
+            {
+              label: '楷体',
+              accelerator: 'ctrl+shift+k',
+              click: function () {
+                const content = JSON.stringify({
+                  "__font__": "kaiti"
+                });
+                fs.writeFileSync(config_url, content);
+                show_dialog("kaiti")
+              }
+            },
+            {
+              label: '宋楷',
+              accelerator: 'ctrl+shift+g',
+              click: function () {
+                const content = JSON.stringify({
+                  "__font__": "songkai"
+                });
+                fs.writeFileSync(config_url, content);
+                show_dialog("songkai")
+              }
+            },
+            {
+              label: '黑体',
+              accelerator: 'ctrl+shift+h',
+              click: function () {
+                const content = JSON.stringify({
+                  "__font__": "heiti"
+                });
+                fs.writeFileSync(config_url, content);
+                show_dialog("heiti")
+              }
+            },
+            {
+              label: 'クレPro',
+              accelerator: 'ctrl+shift+p',
+              click: function () {
+                const content = JSON.stringify({
+                  "__font__": "NotoSansCJK"
+                });
+                fs.writeFileSync(config_url, content);
+                show_dialog("NotoSansCJK")
+              }
             }
-          },
-          {
-            label: '黑体',
-            accelerator: 'ctrl+shift+h',
-            click: function () {
-              const content = JSON.stringify({
-                "__font__": "heiti"
-              });
-              fs.writeFileSync(config_url, content);
-              show_dialog("heiti")
-            }
-          },
-          {
-            label: 'クレPro',
-            accelerator: 'ctrl+shift+p',
-            click: function () {
-              const content = JSON.stringify({
-                "__font__": "NotoSansCJK"
-              });
-              fs.writeFileSync(config_url, content);
-              show_dialog("NotoSansCJK")
-            }
-          }
-        ]
-      }, ]
+          ]
+        },
+      ]
     }
   ]
 
