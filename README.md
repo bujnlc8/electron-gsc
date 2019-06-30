@@ -6,7 +6,7 @@
 
 <img alt="i古诗词小程序码" src="https://i.loli.net/2018/11/11/5be80d00518d4.jpg" width="200">
 
-#### 怎么跑
+### 怎么跑
 
 ``` bash
 # 安装依赖
