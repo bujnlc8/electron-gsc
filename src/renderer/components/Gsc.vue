@@ -44,11 +44,7 @@
             </el-col>
             <el-col :span="3">
               <div class="grid-content content-right">
-                <img
-                  src="../assets/sound.png"
-                  v-if="gsc.audio_id > 0"
-                  style="width:1em;height:1em;"
-                />
+                <i class="el-icon-service" v-if="gsc.audio_id > 0" style="margin-right:1em;"></i>
               </div>
             </el-col>
           </el-row>
@@ -297,7 +293,7 @@ export default {
       if (this.$parent.dark_mode == "light-yellow") {
         color = "whitesmoke";
       } else if (this.$parent.dark_mode == "dark") {
-        color = "white";
+        color = "#93816d";
       }
       html2canvas(document.getElementById("mycapture"), {
         backgroundColor: color
