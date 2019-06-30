@@ -1,23 +1,24 @@
-# i古诗词基于electron的mac客户端。
+### i古诗词基于`electron`的mac客户端。
 
-> 主要提供古诗词查询及朗诵。
+主要提供古诗词查询及朗诵。
 
-> 另见小程序`i古诗词`：
-> <img alt="i古诗词小程序码" src="https://i.loli.net/2018/11/11/5be80d00518d4.jpg" width="200">
+另见小程序`i古诗词`：
 
-#### Build Setup
+<img alt="i古诗词小程序码" src="https://i.loli.net/2018/11/11/5be80d00518d4.jpg" width="200">
+
+#### 怎么跑
 
 ``` bash
-# install dependencies
+# 安装依赖
 npm install
 
-# serve with hot reload at localhost:9080
+# 本地开发
 npm run dev
 
-# build electron application for production
+# 编译
 npm run build
 ```
 
----
+### 直接上图
 
-This project was generated with [electron-vue](https://github.com/SimulatedGREG/electron-vue)@[8fae476](https://github.com/SimulatedGREG/electron-vue/tree/8fae4763e9d225d3691b627e83b9e09b56f6c935) using [vue-cli](https://github.com/vuejs/vue-cli). Documentation about the original structure can be found [here](https://simulatedgreg.gitbooks.io/electron-vue/content/index.html).
+![i古诗词.png](https://s2.ax1x.com/2019/06/30/Z3n1yt.png)
