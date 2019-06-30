@@ -36,19 +36,18 @@ export default {
   mounted(){
     let body = document.body
     ipcRenderer.on("change-style", function(event, is_dark) {
-        console.log(is_dark)
         if(is_dark){
           body.className = "dark"
           document.getElementsByClassName("el-input__inner")[0].style.backgroundColor = '#bfbfbf'
           setTimeout(()=>{
               document.getElementsByClassName("aplayer-info")[0].style.backgroundColor = '#bfbfbf'
-          },500)
+          },1000)
         }else{
           body.className = "light"
           document.getElementsByClassName("el-input__inner")[0].style.backgroundColor = '#fff'
           setTimeout(()=>{
               document.getElementsByClassName("aplayer-info")[0].style.backgroundColor = '#fff'
-          },500)
+          },1000)
         }
     });
   }
@@ -83,6 +82,16 @@ export default {
 .el-button--primary, .el-input__inner, .aplayer-info{
   font-family: "songti";
 }
+.el-input__inner{
+  border-radius: 20px !important;
+  border: none !important;
+}
+.el-input__inner:focus{
+  border: 1px solid #bb7e7e !important;
+}
+.el-loading-mask{
+  border-radius: 20px !important;
+}
 
 .el-tabs__item.is-active{
   color: #bb7e7e !important;
@@ -96,6 +105,9 @@ export default {
 .el-tabs__active-bar{
   background-color: #bb7e7e !important;
   height: 2.5px !important;
+}
+.el-input__prefix{
+  color: #bb7e7e !important;
 }
 
 /*美化滚动条*/
@@ -120,15 +132,28 @@ border-radius: 3px;
 background-color:rgba(158, 158, 158, 1);
 }
 
+body{
+  -webkit-app-region: no-drag;
+}
+
+.titlebar {
+  height: 40px;
+  margin-top: -20px;
+  -webkit-app-region: drag;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+
 .light {  
-  padding: 6px 12px 20px 12px;
+  padding: 0px 12px 20px 12px;
   background-repeat: repeat;
   background-size: cover;
   background-image: url("assets/light.jpeg")
 }
 
 .dark{
-  padding: 6px 12px 20px 12px;
+  color: #fff;
+  padding: 0px 12px 20px 12px;
   background-repeat: repeat;
   background-size: cover;
   background-image: url("assets/dark.png");

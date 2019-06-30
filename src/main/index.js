@@ -36,6 +36,7 @@ function createWindow() {
     show: false,
     center: true,
     vibrancy: 'popover',
+    titleBarStyle: 'hidden'
   })
   mainWindow.loadURL(winURL)
   mainWindow.once('ready-to-show', () => {
@@ -108,13 +109,16 @@ if (process.platform === 'darwin') {
   )
 }
 const show_dialog = (font_name) => {
-  dialog.showMessageBox({
-    type: "info",
-    message: "可能需要重启应用才能生效哦～",
-    icon: image
-  });
   // 发送更换字体给渲染进程
-  mainWindow.webContents.send('change-font', font_name);
+  try{
+    mainWindow.webContents.send('change-font', font_name);
+  }catch(e){
+    dialog.showMessageBox({
+      type: "info",
+      message: "可能需要重启应用才能生效哦～",
+      icon: image
+    });
+  }
 }
 
 
@@ -126,8 +130,8 @@ const set_menu = () => {
         accelerator: 'ctrl+j',
         click: function () {
           let win = new BrowserWindow({
-            width: 350,
-            height: 250
+            width: 380,
+            height: 300
           })
           win.loadURL(`file://${__static}/about.html`)
         }

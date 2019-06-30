@@ -2,20 +2,20 @@
   <div>
     <el-container :style="container_style">
       <el-aside width="480px">
-        <el-row>
+        <el-row style="position:fixed;z-index:999;width:460px;">
           <el-col :span="19">
             <el-input element-loading-text="拼命搜索中" v-loading="loading" element-loading-spinner="el-icon-loading" v-model="input" prefix-icon="el-icon-search" @keyup.enter.native="search" clearable placeholder="请输入内容"></el-input>
           </el-col>
           <el-col :span="4">
-            <el-button type="primary" round icon="el-icon-right" @click="search">搜索</el-button>
+            <el-button type="primary" round icon="el-icon-right" @click="search" v-bind:disabled="loading">搜索</el-button>
           </el-col>
         </el-row>
-        <el-row style="margin-top:1rem;" v-if="gscs.length > 0">
+        <el-row style="margin-top:3rem;" v-if="gscs.length > 0">
           <el-col :span="23">
             <div class="grid-content bg-purple-dark">搜索结果({{gscs.length}})</div>
           </el-col>
         </el-row>
-        <el-row style="margin-top:1rem;" v-if="gscs.length == 0">
+        <el-row style="margin-top:3rem;" v-if="gscs.length == 0">
           <el-col :span="23">暂无搜索结果，请尝试其他输入吧~</el-col>
         </el-row>
         <div v-for="gsc in gscs" v-bind:key="gsc.id" class="gsc-div" @click="open_gsc(gsc.id)">
@@ -46,7 +46,7 @@
       <el-container>
         <!---右半部分开始-->
         <el-main v-if="current_gsc" style="margin-top:-10px;">
-          <div id="mycapture" style="padding:1.5em 2em;">
+          <div id="mycapture" style="padding:1.2em 2em;">
           <el-row class="content">
             <el-col :span="24">
               <div style="text-align:center;font-size:1.3em;"><label @click="search_word(current_gsc.work_title)">{{current_gsc.work_title}}</label></div>
@@ -77,7 +77,7 @@
           </div>
           <el-row v-if="current_gsc.audio_id > 0">
              <el-col :span="24">
-                  <aplayer preload="none" theme="#b7daff" :music="musicList" listmaxheight="1">
+                  <aplayer preload="none" theme="#bb7e7e" :music="musicList" listMaxHeight="1">
                 </aplayer>
             </el-col>
           </el-row>
@@ -213,7 +213,7 @@ export default {
       musicList: null,
       activeName: '',
       imgsrc: '',
-      container_style: {"height": "626px"}
+      container_style: {"height": "612px"}
     };
   },
   mounted(){
@@ -320,11 +320,11 @@ export default {
               let gsc_obj = d.data.data[i];
               this.do_content(gsc_obj);
             }
-            this.loading = false;
             this.gscs = d.data.data;
             if (this.gscs.length > 0 && !this.current_gsc) {
               this.open_gsc(this.gscs[0].id);
             }
+            this.loading = false;
           }
         })
         .catch(e => {
