@@ -28,8 +28,8 @@
         <el-row style="margin-top:3rem;" v-if="gscs.length > 0">
           <el-col :span="23">
             <div class="grid-content bg-purple-dark">
-              <label v-if="chinese=='cn'">搜索结果({{gscs.length}})</label>
-              <label v-if="chinese=='tw'">搜索結果({{gscs.length}})</label>
+              <label v-if="chinese =='cn'">搜索结果( {{gscs.length}} )</label>
+              <label v-if="chinese =='tw'">搜索結果( {{gscs.length}} )</label>
             </div>
           </el-col>
         </el-row>
@@ -154,8 +154,9 @@ import html2canvas from "html2canvas";
 const jf_convert = require("chinese_convert");
 const fs = require("fs");
 const path = require("path");
-const { remote, ipcRenderer } = require("electron");
-const { Menu, MenuItem, clipboard, BrowserWindow, nativeImage } = remote;
+const { remote, ipcRenderer} = require("electron");
+const { Menu, MenuItem, clipboard, BrowserWindow, nativeImage, app } = remote;
+const userDataPath = app.getPath("userData")
 const menu = new Menu();
 menu.append(
   new MenuItem({
@@ -249,7 +250,9 @@ menu.append(
         width: 1000,
         height: 800
       });
-      win.loadURL("https://www.baidu.com/s?wd={0}&ie=utf-8".format(selectedText));
+      win.loadURL(
+        "https://www.baidu.com/s?wd={0}&ie=utf-8".format(selectedText)
+      );
     }
   })
 );
@@ -290,14 +293,14 @@ export default {
   mounted() {
     let that = this;
     ipcRenderer.on("capture_content", (event, message) => {
-      let color = "#FFFCEC"
-      if(this.$parent.dark_mode == "light-yellow"){
-        color = "whitesmoke"
-      }else if(this.$parent.dark_mode == "dark"){
-        color = "white"
+      let color = "#FFFCEC";
+      if (this.$parent.dark_mode == "light-yellow") {
+        color = "whitesmoke";
+      } else if (this.$parent.dark_mode == "dark") {
+        color = "white";
       }
       html2canvas(document.getElementById("mycapture"), {
-        backgroundColor: color,
+        backgroundColor: color
       }).then(canvas => {
         //this.imgsrc = canvas.toDataURL('image/png')
         let data_url = canvas.toDataURL("image/png");
@@ -346,7 +349,7 @@ export default {
     });
   },
   methods: {
-    cn2twgsc(gsc_obj){
+    cn2twgsc(gsc_obj) {
       gsc_obj.work_title = jf_convert.cn2tw(gsc_obj.work_title);
       gsc_obj.work_author = jf_convert.cn2tw(gsc_obj.work_author);
       gsc_obj.work_dynasty = jf_convert.cn2tw(gsc_obj.work_dynasty);
@@ -359,7 +362,7 @@ export default {
       gsc_obj.translation = jf_convert.cn2tw(gsc_obj.translation);
       gsc_obj.foreword = jf_convert.cn2tw(gsc_obj.foreword);
     },
-    tw2cngsc(gsc_obj){
+    tw2cngsc(gsc_obj) {
       gsc_obj.work_title = jf_convert.tw2cn(gsc_obj.work_title);
       gsc_obj.work_author = jf_convert.tw2cn(gsc_obj.work_author);
       gsc_obj.work_dynasty = jf_convert.tw2cn(gsc_obj.work_dynasty);
@@ -373,7 +376,7 @@ export default {
       gsc_obj.foreword = jf_convert.tw2cn(gsc_obj.foreword);
     },
     search_word(word) {
-      this.input = jf_convert.tw2cn(word)
+      this.input = jf_convert.tw2cn(word);
       this.search();
     },
     do_content(gsc_obj) {
@@ -556,7 +559,7 @@ export default {
       }
     });
     // 设置简繁体
-    let chinese_config_url = path.join(__static, "./chinese.json");
+    let chinese_config_url = path.join(userDataPath, "./user_config/chinese.json");
     if (fs.existsSync(chinese_config_url)) {
       try {
         let result = fs.readFileSync(chinese_config_url);

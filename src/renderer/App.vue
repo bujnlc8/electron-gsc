@@ -1,5 +1,6 @@
 <template>
   <div id="app" :style="myfont">
+    <div class="titlebar" v-if="platform =='darwin'"></div>
     <router-view></router-view>
   </div>
 </template>
@@ -8,16 +9,19 @@
 import { setTimeout } from "timers";
 const fs = require("fs");
 const path = require("path");
-const { ipcRenderer } = require("electron");
-let dark_config_url = path.join(__static, "./darkmode.json");
+const { ipcRenderer, remote } = require("electron");
+const {app} = remote
+const userDataPath = app.getPath("userData")
+let dark_config_url = path.join(userDataPath, "./user_config/darkmode.json");
 import Gsc from "./components/Gsc";
 export default {
   name: "igsc",
   components: {Gsc},
   data() {
     return {
-      myfont: { "font-family": "NotoSansCJK" },
-      dark_mode: 'dark'
+      myfont: { "font-family": "songkai" },
+      dark_mode: 'light',
+      platform: process.platform
     };
   },
   created() {
@@ -26,10 +30,10 @@ export default {
       that.myfont = { "font-family": message };
     });
     // 设置字体
-    let config_url = path.join(__static, "./localConfig.json");
-    if (fs.existsSync(config_url)) {
+    let font_config_url = path.join(userDataPath, "./user_config/font.json");
+    if (fs.existsSync(font_config_url)) {
       try {
-        let result = fs.readFileSync(config_url);
+        let result = fs.readFileSync(font_config_url);
         result = JSON.parse(result);
         this.myfont = { "font-family": result.__font__ };
       } catch (error) {
@@ -39,7 +43,7 @@ export default {
   },
   mounted() {
     let that = this;
-    let dark_config_url = path.join(__static, "./dark_mode.json");
+    let dark_config_url = path.join(userDataPath, "./user_config/dark_mode.json");
     ipcRenderer.on("change-style", (event, dark_mode, is_user) => {
       if (!fs.existsSync(dark_config_url) || is_user){
           this.change_mode(dark_mode);
@@ -172,11 +176,11 @@ body {
 }
 
 .titlebar {
+  z-index: 999;
   height: 40px;
   margin-top: -20px;
   -webkit-app-region: drag;
   -webkit-user-select: none;
-  cursor: pointer;
 }
 
 .light-yellow {
@@ -200,7 +204,7 @@ body {
   background-repeat: repeat;
   background-size: cover;
   background-image: url("assets/dark.png");
-  background-color: #625b57;
+  background-color:#006374;
 }
 .el-tabs__nav-wrap::after{
   height: 1px !important;

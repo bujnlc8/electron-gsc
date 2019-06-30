@@ -1,5 +1,5 @@
 {
-  "name": "igsc",
+  "name": "iGsc",
   "version": "0.0.3",
   "author": "haihuiling2014@gmail.com",
   "description": "主要提供古诗词查询及朗诵",
@@ -20,7 +20,7 @@
   },
   "build": {
     "productName": "i古诗词",
-    "appId": "site.haihui.igsc",
+    "appId": "site.haihui.iGsc",
     "directories": {
       "output": "build"
     },
@@ -43,20 +43,21 @@
       ]
     },
     "mac": {
-      "icon": "build/icons/igsc-icon.png",
+      "icon": "static/igsc-icon.png",
       "darkModeSupport": true
     },
     "win": {
-      "icon": "build/icons/igsc-icon.png"
+      "icon": "static/igsc-icon.png"
     },
     "linux": {
-      "icon": "build/icons/igsc-icon.png"
+      "icon": "static/igsc-icon.png"
     }
   },
   "dependencies": {
     "axios": "^0.18.0",
     "chinese_convert": "^1.0.8",
     "element-ui": "^2.10.0",
+    "fs-extra": "^8.1.0",
     "html2canvas": "^1.0.0-rc.3",
     "vue": "^2.5.16",
     "vue-aplayer": "^1.6.1",

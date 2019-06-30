@@ -17,9 +17,18 @@ if (process.env.NODE_ENV !== 'development') {
 
 const path = require("path")
 const fs = require("fs")
-let config_url = path.join(__static, './localConfig.json')
-let chinese_config_url = path.join(__static, './chinese.json')
-let dark_config_url = path.join(__static, './dark_mode.json')
+const xfs = require("fs-extra")
+const userDataPath = app.getPath("userData")
+if(!fs.existsSync(path.join(userDataPath, "./user_config"))){
+  try{
+    xfs.ensureDirSync(path.join(userDataPath, "./user_config"))
+  }catch(e){
+    console.log(e)
+  }
+}
+let font_config_url = path.join(userDataPath, './user_config/font.json')
+let chinese_config_url = path.join(userDataPath, './user_config/chinese.json')
+let dark_config_url = path.join(userDataPath, './user_config/dark_mode.json')
 const image = nativeImage.createFromPath(path.join(__static, './icon@3x.png'))
 
 let mainWindow
@@ -56,7 +65,7 @@ function createWindow() {
     }
   })
   // 托盘
-  const tray = new Tray(path.join(__static, './icon@3x.png'))
+  const tray = new Tray(path.join(__static, './icon.png'))
   tray.setToolTip('i古诗词')
   mainWindow.on('closed', () => {
     mainWindow = null
@@ -130,7 +139,15 @@ const show_dialog = (font_name) => {
   }
 }
 
-
+const writeFile = (file_url, content)=>{
+  if(!fs.existsSync(file_url)){
+    let stream = fs.createWriteStream(file_url, {flags:'w', autoClose:true, start: 0})
+    stream.write(content)
+    stream.end()
+  }else{
+    fs.writeFileSync(file_url, content)
+  }
+}
 const set_menu = () => {
   let menus = [{
       label: "i古诗词",
@@ -175,7 +192,7 @@ const set_menu = () => {
               const content = JSON.stringify({
                 "__dark_mode__": "dark"
               });
-              fs.writeFileSync(dark_config_url, content);
+              writeFile(dark_config_url, content);
             }
           }, {
             label: "明亮",
@@ -185,7 +202,7 @@ const set_menu = () => {
               const content = JSON.stringify({
                 "__dark_mode__": "light"
               });
-              fs.writeFileSync(dark_config_url, content);
+              writeFile(dark_config_url, content);
             }
           }, {
             label: "明黄",
@@ -195,7 +212,7 @@ const set_menu = () => {
               const content = JSON.stringify({
                 "__dark_mode__": "light-yellow"
               });
-              fs.writeFileSync(dark_config_url, content);
+              writeFile(dark_config_url, content);
             }
           }]
         },
@@ -210,7 +227,7 @@ const set_menu = () => {
               const content = JSON.stringify({
                 "__chinese__": "cn"
               });
-              fs.writeFileSync(chinese_config_url, content);
+              writeFile(chinese_config_url, content);
             }
           }, {
             label: "繁体",
@@ -220,7 +237,7 @@ const set_menu = () => {
               const content = JSON.stringify({
                 "__chinese__": "tw"
               });
-              fs.writeFileSync(chinese_config_url, content);
+              writeFile(chinese_config_url, content);
             }
           }]
         },
@@ -234,7 +251,7 @@ const set_menu = () => {
                 const content = JSON.stringify({
                   "__font__": "songti"
                 });
-                fs.writeFileSync(config_url, content);
+                writeFile(font_config_url, content);
                 show_dialog("songti")
               }
             },
@@ -245,7 +262,7 @@ const set_menu = () => {
                 const content = JSON.stringify({
                   "__font__": "kaiti"
                 });
-                fs.writeFileSync(config_url, content);
+                writeFile(font_config_url, content);
                 show_dialog("kaiti")
               }
             },
@@ -256,7 +273,7 @@ const set_menu = () => {
                 const content = JSON.stringify({
                   "__font__": "songkai"
                 });
-                fs.writeFileSync(config_url, content);
+                writeFile(font_config_url, content);
                 show_dialog("songkai")
               }
             },
@@ -267,7 +284,7 @@ const set_menu = () => {
                 const content = JSON.stringify({
                   "__font__": "heiti"
                 });
-                fs.writeFileSync(config_url, content);
+                writeFile(font_config_url, content);
                 show_dialog("heiti")
               }
             },
@@ -278,7 +295,7 @@ const set_menu = () => {
                 const content = JSON.stringify({
                   "__font__": "NotoSansCJK"
                 });
-                fs.writeFileSync(config_url, content);
+                writeFile(font_config_url, content);
                 show_dialog("NotoSansCJK")
               }
             }
