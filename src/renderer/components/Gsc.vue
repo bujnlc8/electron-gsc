@@ -1,13 +1,12 @@
 <template>
-  <div>
+  <div v-if="!$parent.body_loading">
     <el-container :style="container_style">
       <el-aside width="480px">
         <el-row style="position:fixed;z-index:999;width:460px;">
           <el-col :span="19">
             <el-input
-              element-loading-text="拼命搜索中"
               v-loading="loading"
-              element-loading-spinner="el-icon-loading"
+              element-loading-text="用力搜索中..."
               v-model="input"
               prefix-icon="el-icon-search"
               @keyup.enter.native="search"
@@ -28,8 +27,7 @@
         <el-row style="margin-top:3rem;" v-if="gscs.length > 0">
           <el-col :span="23">
             <div class="grid-content bg-purple-dark">
-              <label v-if="chinese =='cn'">搜索结果( {{gscs.length}} )</label>
-              <label v-if="chinese =='tw'">搜索結果( {{gscs.length}} )</label>
+              <label>搜索結果( {{gscs.length}} )</label>
             </div>
           </el-col>
         </el-row>
@@ -150,9 +148,9 @@ import html2canvas from "html2canvas";
 const jf_convert = require("chinese_convert");
 const fs = require("fs");
 const path = require("path");
-const { remote, ipcRenderer} = require("electron");
+const { remote, ipcRenderer } = require("electron");
 const { Menu, MenuItem, clipboard, BrowserWindow, nativeImage, app } = remote;
-const userDataPath = app.getPath("userData")
+const userDataPath = app.getPath("userData");
 const menu = new Menu();
 menu.append(
   new MenuItem({
@@ -555,7 +553,10 @@ export default {
       }
     });
     // 设置简繁体
-    let chinese_config_url = path.join(userDataPath, "./user_config/chinese.json");
+    let chinese_config_url = path.join(
+      userDataPath,
+      "./user_config/chinese.json"
+    );
     if (fs.existsSync(chinese_config_url)) {
       try {
         let result = fs.readFileSync(chinese_config_url);

@@ -57,6 +57,7 @@
     "axios": "^0.18.0",
     "chinese_convert": "^1.0.8",
     "element-ui": "^2.10.0",
+    "fs": "^0.0.1-security",
     "fs-extra": "^8.1.0",
     "html2canvas": "^1.0.0-rc.3",
     "vue": "^2.5.16",

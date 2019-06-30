@@ -1,10 +1,13 @@
 <template>
   <div id="app" :style="myfont">
     <div class="titlebar" v-if="platform =='darwin'"></div>
+    <div v-loading="body_loading" 
+  element-loading-fullscreen="true" element-loading-background="rgba(0, 0, 0, 0.9)"
+  element-loading-text="用力加载中..." style="height:592px;" 
+  v-if="body_loading"></div>
     <router-view></router-view>
   </div>
 </template>
-
 <script>
 import { setTimeout } from "timers";
 const fs = require("fs");
@@ -21,7 +24,8 @@ export default {
     return {
       myfont: { "font-family": "songkai" },
       dark_mode: 'light',
-      platform: process.platform
+      platform: process.platform,
+      body_loading: true,
     };
   },
   created() {
@@ -57,6 +61,11 @@ export default {
           result = JSON.parse(result);
           that.change_mode(result.__dark_mode__ );
         } catch (error) {}
+      }
+      if (this.body_loading) {
+        setTimeout(()=>{
+            this.body_loading = false
+        }, 2000)
       }
     };
   },
@@ -132,7 +141,7 @@ export default {
 .el-button--primary{
 background-color: #93816d !important;
 border-color: #93816d !important;
-opacity: 0.8;
+opacity: 0.7;
 }
 .el-loading-spinner .path{
  stroke: #93816d !important;
@@ -193,7 +202,7 @@ body {
   background-repeat: repeat;
   background-size: cover;
   background-image: url("assets/dark.png");
-  background-color:#1d1d1d;
+  background-color:#0047ab;
 }
 .el-tabs__nav-wrap::after{
   height: 1px !important;
