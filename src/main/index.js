@@ -18,6 +18,8 @@ if (process.env.NODE_ENV !== 'development') {
 const path = require("path")
 const fs = require("fs")
 let config_url = path.join(__static, './localConfig.json')
+let chinese_config_url = path.join(__static, './chinese.json')
+let dark_config_url = path.join(__static, './dark_mode.json')
 const image = nativeImage.createFromPath(path.join(__static, './icon@3x.png'))
 
 let mainWindow
@@ -35,7 +37,6 @@ function createWindow() {
     resizable: false,
     show: false,
     center: true,
-    vibrancy: 'popover',
     titleBarStyle: 'hidden'
   })
   mainWindow.loadURL(winURL)
@@ -110,9 +111,9 @@ if (process.platform === 'darwin') {
 }
 const show_dialog = (font_name) => {
   // 发送更换字体给渲染进程
-  try{
+  try {
     mainWindow.webContents.send('change-font', font_name);
-  }catch(e){
+  } catch (e) {
     dialog.showMessageBox({
       type: "info",
       message: "可能需要重启应用才能生效哦～",
@@ -163,12 +164,45 @@ const set_menu = () => {
             accelerator: 'ctrl+shift+b',
             click: function () {
               mainWindow.webContents.send('change-style', true);
+              const content = JSON.stringify({
+                "__dark_mode__": "dark"
+              });
+              fs.writeFileSync(dark_config_url, content);
             }
           }, {
             label: "明黄",
             accelerator: 'ctrl+shift+y',
             click: function () {
               mainWindow.webContents.send('change-style', false);
+              const content = JSON.stringify({
+                "__dark_mode__": "light"
+              });
+              fs.writeFileSync(dark_config_url, content);
+            }
+          }]
+        },
+        {
+          label: '简繁转换',
+          accelerator: 'ctrl+i',
+          submenu: [{
+            label: "简体",
+            accelerator: 'ctrl+shift+c',
+            click: function () {
+              mainWindow.webContents.send('change-jianti', true);
+              const content = JSON.stringify({
+                "__chinese__": "cn"
+              });
+              fs.writeFileSync(chinese_config_url, content);
+            }
+          }, {
+            label: "繁体",
+            accelerator: 'ctrl+shift+t',
+            click: function () {
+              mainWindow.webContents.send('change-fanti', false);
+              const content = JSON.stringify({
+                "__chinese__": "tw"
+              });
+              fs.writeFileSync(chinese_config_url, content);
             }
           }]
         },
