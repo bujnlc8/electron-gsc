@@ -63,28 +63,7 @@ export default {
   methods: {
     change_mode(dark_mode){
       this.dark_mode = dark_mode
-      let body = document.body
-      if (dark_mode=="dark") {
-        body.className = "dark";
-        document.getElementsByClassName(
-          "el-input__inner"
-        )[0].style.backgroundColor = "#bfbfbf";
-        setTimeout(() => {
-          document.getElementsByClassName(
-            "aplayer-info"
-          )[0].style.backgroundColor = "#bfbfbf";
-        }, 1000);
-      } else {
-        body.className = dark_mode;
-        document.getElementsByClassName(
-          "el-input__inner"
-        )[0].style.backgroundColor = "#fff";
-        setTimeout(() => {
-          document.getElementsByClassName(
-            "aplayer-info"
-          )[0].style.backgroundColor = "#fff";
-        }, 1000);
-      }
+      document.body.className = dark_mode;
     }
   }
 };
@@ -125,28 +104,38 @@ export default {
   border: none !important;
 }
 .el-input__inner:focus {
-  border: 1px solid #bb7e7e !important;
+  border: 1px solid #93816d !important;
 }
 .el-loading-mask {
   border-radius: 20px !important;
+  background-color:rgba(255,255,255,0) !important;
 }
 
 .el-tabs__item.is-active {
-  color: #bb7e7e !important;
+  color: #93816d !important;
   font-weight: 700;
   font-size: 1.1em;
   opacity: 0.8;
 }
 .el-tabs__item:hover {
-  color: #bb7e7e !important;
+  color: #93816d !important;
 }
 /*tab激活样式*/
 .el-tabs__active-bar {
-  background-color: #bb7e7e !important;
+  background-color: #93816d !important;
   height: 2.5px !important;
 }
 .el-input__prefix {
-  color: #bb7e7e !important;
+  color: #93816d !important;
+}
+
+.el-button--primary{
+background-color: #93816d !important;
+border-color: #93816d !important;
+opacity: 0.8;
+}
+.el-loading-spinner .path{
+ stroke: #93816d !important;
 }
 
 /*美化滚动条*/
@@ -157,7 +146,7 @@ export default {
 /*定义滚动条轨道 内阴影+圆角*/
 ::-webkit-scrollbar-track {
   -webkit-box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.3);
-  background: #fff;
+  background: #f5fffa;
 }
 /*定义滑块 内阴影+圆角*/
 ::-webkit-scrollbar-thumb {
@@ -204,7 +193,7 @@ body {
   background-repeat: repeat;
   background-size: cover;
   background-image: url("assets/dark.png");
-  background-color:#006374;
+  background-color:#1d1d1d;
 }
 .el-tabs__nav-wrap::after{
   height: 1px !important;

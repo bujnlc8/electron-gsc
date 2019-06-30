@@ -100,7 +100,7 @@
           </div>
           <el-row v-if="current_gsc.audio_id > 0">
             <el-col :span="24">
-              <aplayer preload="none" theme="#bb7e7e" :music="musicList" listMaxHeight="1"></aplayer>
+              <aplayer preload="none" theme="#93816d" :music="musicList" listMaxHeight="1"></aplayer>
             </el-col>
           </el-row>
           <el-tabs v-model="activeName" v-if="chinese == 'cn'">
@@ -580,7 +580,7 @@ export default {
 }
 .seperate-div {
   height: 0;
-  border: 0.5px dashed #bb7e7e;
+  border: 0.5px dashed #93816d;
   margin-top: 0.5rem;
   opacity: 0.5;
   margin-right: 1em;
