@@ -46,9 +46,13 @@ function createWindow() {
   // 设置style
   mainWindow.webContents.on('did-finish-load', () => {
     if (process.platform === "darwin") {
-      mainWindow.webContents.send('change-style', systemPreferences.isDarkMode())
+      let dark_mode = "light"
+      if (systemPreferences.isDarkMode()) {
+        dark_mode = "dark"
+      }
+      mainWindow.webContents.send('change-style', dark_mode, false)
     } else {
-      mainWindow.webContents.send('change-style', false)
+      mainWindow.webContents.send('change-style', "light", false)
     }
   })
   // 托盘
@@ -105,7 +109,11 @@ if (process.platform === 'darwin') {
   systemPreferences.subscribeNotification(
     'AppleInterfaceThemeChangedNotification',
     function theThemeHasChanged() {
-      mainWindow.webContents.send('change-style', systemPreferences.isDarkMode());
+      let dark_mode = "light"
+      if (systemPreferences.isDarkMode()) {
+        dark_mode = "dark"
+      }
+      mainWindow.webContents.send('change-style', dark_mode, true);
     }
   )
 }
@@ -163,9 +171,19 @@ const set_menu = () => {
             label: "暗黑",
             accelerator: 'ctrl+shift+b',
             click: function () {
-              mainWindow.webContents.send('change-style', true);
+              mainWindow.webContents.send('change-style', "dark", true);
               const content = JSON.stringify({
                 "__dark_mode__": "dark"
+              });
+              fs.writeFileSync(dark_config_url, content);
+            }
+          }, {
+            label: "明亮",
+            accelerator: 'ctrl+shift+l',
+            click: function () {
+              mainWindow.webContents.send('change-style', "light", true);
+              const content = JSON.stringify({
+                "__dark_mode__": "light"
               });
               fs.writeFileSync(dark_config_url, content);
             }
@@ -173,9 +191,9 @@ const set_menu = () => {
             label: "明黄",
             accelerator: 'ctrl+shift+y',
             click: function () {
-              mainWindow.webContents.send('change-style', false);
+              mainWindow.webContents.send('change-style', "light-yellow", true);
               const content = JSON.stringify({
-                "__dark_mode__": "light"
+                "__dark_mode__": "light-yellow"
               });
               fs.writeFileSync(dark_config_url, content);
             }

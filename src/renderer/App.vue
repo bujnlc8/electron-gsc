@@ -10,12 +10,14 @@ const fs = require("fs");
 const path = require("path");
 const { ipcRenderer } = require("electron");
 let dark_config_url = path.join(__static, "./darkmode.json");
-let body = document.body;
+import Gsc from "./components/Gsc";
 export default {
   name: "igsc",
+  components: {Gsc},
   data() {
     return {
       myfont: { "font-family": "NotoSansCJK" },
+      dark_mode: 'dark'
     };
   },
   created() {
@@ -34,29 +36,31 @@ export default {
         this.myfont = { "font-family": "songkai" };
       }
     }
-    // 设置暗黑模式
-    let dark_config_url = path.join(__static, "./dark_mode.json");
-    if (fs.existsSync(dark_config_url)) {
-      try {
-        let result = fs.readFileSync(dark_config_url);
-        result = JSON.parse(result);
-        if (result.__dark_mode__ == "dark") {
-          this.change_mode(true)
-        } else {
-          this.change_mode(false)
-        }
-      } catch (error) {
-      }
-    }
   },
   mounted() {
-    ipcRenderer.on("change-style", (event, is_dark)=> {
-      this.change_mode(is_dark)
+    let that = this;
+    let dark_config_url = path.join(__static, "./dark_mode.json");
+    ipcRenderer.on("change-style", (event, dark_mode, is_user) => {
+      if (!fs.existsSync(dark_config_url) || is_user){
+          this.change_mode(dark_mode);
+      }
     });
+    window.onload = () => {
+      // 设置暗黑模式
+      if (fs.existsSync(dark_config_url)) {
+        try {
+          let result = fs.readFileSync(dark_config_url);
+          result = JSON.parse(result);
+          that.change_mode(result.__dark_mode__ );
+        } catch (error) {}
+      }
+    };
   },
   methods: {
-    change_mode:(is_dark)=>{
-      if (is_dark) {
+    change_mode(dark_mode){
+      this.dark_mode = dark_mode
+      let body = document.body
+      if (dark_mode=="dark") {
         body.className = "dark";
         document.getElementsByClassName(
           "el-input__inner"
@@ -67,7 +71,7 @@ export default {
           )[0].style.backgroundColor = "#bfbfbf";
         }, 1000);
       } else {
-        body.className = "light";
+        body.className = dark_mode;
         document.getElementsByClassName(
           "el-input__inner"
         )[0].style.backgroundColor = "#fff";
@@ -78,7 +82,7 @@ export default {
         }, 1000);
       }
     }
-  },
+  }
 };
 </script>
 
@@ -127,6 +131,7 @@ export default {
   color: #bb7e7e !important;
   font-weight: 700;
   font-size: 1.1em;
+  opacity: 0.8;
 }
 .el-tabs__item:hover {
   color: #bb7e7e !important;
@@ -174,19 +179,31 @@ body {
   cursor: pointer;
 }
 
-.light {
+.light-yellow {
+  color: #625b57;
   padding: 0px 12px 20px 12px;
   background-repeat: repeat;
   background-size: cover;
   background-image: url("assets/light.jpeg");
 }
 
+.light {
+  padding: 0px 12px 20px 12px;
+  background-repeat: repeat;
+  background-size: cover;
+  background-image: url("assets/dark.png");
+}
+
 .dark {
-  color: #fff;
+  color:#b8d3ca;
   padding: 0px 12px 20px 12px;
   background-repeat: repeat;
   background-size: cover;
   background-image: url("assets/dark.png");
   background-color: #625b57;
+}
+.el-tabs__nav-wrap::after{
+  height: 1px !important;
+  opacity: 0.8;
 }
 </style>

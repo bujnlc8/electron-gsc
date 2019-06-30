@@ -28,9 +28,8 @@
         <el-row style="margin-top:3rem;" v-if="gscs.length > 0">
           <el-col :span="23">
             <div class="grid-content bg-purple-dark">
-              <label v-if="chinese=='cn'">搜索结果</label>
-              <label v-if="chinese=='tw'">搜索結果</label>
-              ({{gscs.length}})
+              <label v-if="chinese=='cn'">搜索结果({{gscs.length}})</label>
+              <label v-if="chinese=='tw'">搜索結果({{gscs.length}})</label>
             </div>
           </el-col>
         </el-row>
@@ -250,7 +249,7 @@ menu.append(
         width: 1000,
         height: 800
       });
-      win.loadURL("https://www.baidu.com/s?wd={0}".format(selectedText));
+      win.loadURL("https://www.baidu.com/s?wd={0}&ie=utf-8".format(selectedText));
     }
   })
 );
@@ -273,6 +272,7 @@ window.addEventListener(
 );
 
 export default {
+  name: "Gsc",
   components: { Aplayer },
   data() {
     return {
@@ -290,8 +290,14 @@ export default {
   mounted() {
     let that = this;
     ipcRenderer.on("capture_content", (event, message) => {
+      let color = "#FFFCEC"
+      if(this.$parent.dark_mode == "light-yellow"){
+        color = "whitesmoke"
+      }else if(this.$parent.dark_mode == "dark"){
+        color = "white"
+      }
       html2canvas(document.getElementById("mycapture"), {
-        backgroundColor: "#FFFCEC"
+        backgroundColor: color,
       }).then(canvas => {
         //this.imgsrc = canvas.toDataURL('image/png')
         let data_url = canvas.toDataURL("image/png");
@@ -367,7 +373,7 @@ export default {
       gsc_obj.foreword = jf_convert.tw2cn(gsc_obj.foreword);
     },
     search_word(word) {
-      this.input = word;
+      this.input = jf_convert.tw2cn(word)
       this.search();
     },
     do_content(gsc_obj) {
@@ -538,7 +544,7 @@ export default {
   },
   created() {
     if (process.platform == "win32") {
-      this.container_style = { height: "600px" };
+      this.container_style = { height: "592px" };
     }
     this.search();
     ipcRenderer.on("copy_and_search", (evnet, message, arg1) => {
