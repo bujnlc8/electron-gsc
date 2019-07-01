@@ -91,16 +91,16 @@ export default {
 
 @font-face {
   font-family: "NotoSansCJK";
-  src: url("assets/NotoSansSC-Regular.ttf");
+  src: url("assets/NotoSansCJK.ttf");
 }
 @font-face {
   font-family: "songti";
-  src: url("assets/SourceHanSerifTC-Regular.otf");
+  src: url("assets/songti.otf");
 }
 
 @font-face {
   font-family: "heiti";
-  src: url("assets/SourceHanSansCN-Regular.otf");
+  src: url("assets/heiti.otf");
 }
 
 .el-button--primary,
