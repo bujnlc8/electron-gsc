@@ -12,6 +12,7 @@
               @keyup.enter.native="search"
               clearable
               placeholder="请输入内容"
+              @clear="clear_search()"
             ></el-input>
           </el-col>
           <el-col :span="4">
@@ -24,14 +25,14 @@
             >搜索</el-button>
           </el-col>
         </el-row>
-        <el-row style="margin-top:3rem;" v-if="gscs.length > 0">
+        <el-row style="margin-top:3rem;" v-if="gsc_length > 0">
           <el-col :span="23">
-            <div class="grid-content bg-purple-dark">
-              <label>搜索結果( {{gscs.length}} )</label>
+            <div class="grid-content">
+              <label>搜索結果({{ gsc_length }})</label>
             </div>
           </el-col>
         </el-row>
-        <el-row style="margin-top:3rem;" v-if="gscs.length == 0">
+        <el-row style="margin-top:3rem;" v-if="gsc_length == 0">
           <el-col :span="23" v-if="chinese=='cn'">暂无搜索结果，请尝试其他输入吧~</el-col>
           <el-col :span="23" v-if="chinese=='tw'">暫無搜索結果，請嘗試其他輸入吧~</el-col>
         </el-row>
@@ -42,7 +43,8 @@
             </el-col>
             <el-col :span="3">
               <div class="grid-content content-right">
-                <i class="el-icon-service" v-if="gsc.audio_id > 0" style="margin-right:1em;"></i>
+                <i class="el-icon-view" v-if="current_gsc && current_gsc.id == gsc.id" style="margin-right:1em;"></i>
+                <i class="el-icon-service" v-else-if="gsc.audio_id > 0" style="margin-right:1em;"></i>
               </div>
             </el-col>
           </el-row>
@@ -151,6 +153,10 @@ const path = require("path");
 const { remote, ipcRenderer } = require("electron");
 const { Menu, MenuItem, clipboard, BrowserWindow, nativeImage, app } = remote;
 const userDataPath = app.getPath("userData");
+let config_url = path.join(
+      userDataPath,
+      "./USERCONFIG/config.json"
+    );
 const menu = new Menu();
 menu.append(
   new MenuItem({
@@ -275,13 +281,16 @@ export default {
     return {
       input: "",
       gscs: [],
+      gsc_length: 0,
       loading: false,
       current_gsc: null,
       musicList: null,
       activeName: "",
       imgsrc: "",
       container_style: { height: "612px" },
-      chinese: "cn"
+      chinese: "cn",
+      clear_auto_search: false,
+      offline_search: false
     };
   },
   mounted() {
@@ -341,8 +350,20 @@ export default {
         this.cn2twgsc(this.current_gsc);
       }
     });
+    ipcRenderer.on("clear_auto_search", (event, clear_auto_search)=>{
+      this.clear_auto_search = clear_auto_search
+    })
+    ipcRenderer.on("offline_search", (event, offline_search)=>{
+      this.offline_search = offline_search
+    })
   },
   methods: {
+    clear_search(){
+      if(this.clear_auto_search){
+        this.search()
+      }
+      return true
+    },
     cn2twgsc(gsc_obj) {
       gsc_obj.work_title = jf_convert.cn2tw(gsc_obj.work_title);
       gsc_obj.work_author = jf_convert.cn2tw(gsc_obj.work_author);
@@ -493,6 +514,7 @@ export default {
             if (this.gscs.length > 0 && !this.current_gsc) {
               this.open_gsc(this.gscs[0].id);
             }
+            this.gsc_length = this.gscs.length
             this.loading = false;
           }
         })
@@ -553,15 +575,14 @@ export default {
       }
     });
     // 设置简繁体
-    let chinese_config_url = path.join(
-      userDataPath,
-      "./user_config/chinese.json"
-    );
-    if (fs.existsSync(chinese_config_url)) {
+    
+    if (fs.existsSync(config_url)) {
       try {
-        let result = fs.readFileSync(chinese_config_url);
+        let result = fs.readFileSync(config_url);
         result = JSON.parse(result);
-        this.chinese = result.__chinese__;
+        if(result.__chinese__){
+          this.chinese = result.__chinese__;
+        }
       } catch (error) {
         this.chinese = "cn";
       }

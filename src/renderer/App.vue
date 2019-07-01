@@ -15,7 +15,7 @@ const path = require("path");
 const { ipcRenderer, remote } = require("electron");
 const {app} = remote
 const userDataPath = app.getPath("userData")
-let dark_config_url = path.join(userDataPath, "./user_config/darkmode.json");
+let config_url = path.join(userDataPath, "./USERCONFIG/config.json");
 import Gsc from "./components/Gsc";
 export default {
   name: "igsc",
@@ -33,33 +33,25 @@ export default {
     ipcRenderer.on("change-font", function(event, message) {
       that.myfont = { "font-family": message };
     });
-    // 设置字体
-    let font_config_url = path.join(userDataPath, "./user_config/font.json");
-    if (fs.existsSync(font_config_url)) {
-      try {
-        let result = fs.readFileSync(font_config_url);
-        result = JSON.parse(result);
-        this.myfont = { "font-family": result.__font__ };
-      } catch (error) {
-        this.myfont = { "font-family": "songkai" };
-      }
-    }
   },
   mounted() {
     let that = this;
-    let dark_config_url = path.join(userDataPath, "./user_config/dark_mode.json");
     ipcRenderer.on("change-style", (event, dark_mode, is_user) => {
-      if (!fs.existsSync(dark_config_url) || is_user){
+      if (!fs.existsSync(config_url) || is_user){
           this.change_mode(dark_mode);
       }
     });
     window.onload = () => {
-      // 设置暗黑模式
-      if (fs.existsSync(dark_config_url)) {
+      if (fs.existsSync(config_url)) {
         try {
-          let result = fs.readFileSync(dark_config_url);
+          let result = fs.readFileSync(config_url);
           result = JSON.parse(result);
-          that.change_mode(result.__dark_mode__ );
+          if(result.__dark_mode__){
+              that.change_mode(result.__dark_mode__ );
+          }
+          if(result.__font__){
+              that.myfont = { "font-family": result.__font__ };
+          }
         } catch (error) {}
       }
       if (this.body_loading) {
@@ -102,11 +94,24 @@ export default {
   font-family: "heiti";
   src: url("assets/heiti.otf");
 }
+@font-face {
+  font-family: "huajieti";
+  src: url("assets/huajieti.otf");
+}
+@font-face {
+  font-family: "youyuanti";
+  src: url("assets/youyuanti.otf");
+}
 
 .el-button--primary,
-.el-input__inner,
-.aplayer-info {
+.el-input__inner {
   font-family: "songti";
+}
+
+.aplayer-info{
+  font-family: "songti";
+  background-color:rgba(253, 253, 253, 0.1); 
+  color: #93816d
 }
 .el-input__inner {
   border-radius: 20px !important;

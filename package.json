@@ -14,9 +14,7 @@
     "e2e": "npm run pack && mocha test/e2e",
     "pack": "npm run pack:main && npm run pack:renderer",
     "pack:main": "cross-env NODE_ENV=production webpack --progress --colors --config .electron-vue/webpack.main.config.js",
-    "pack:renderer": "cross-env NODE_ENV=production webpack --progress --colors --config .electron-vue/webpack.renderer.config.js",
-    "test": "npm run unit && npm run e2e",
-    "unit": "karma start test/unit/karma.conf.js"
+    "pack:renderer": "cross-env NODE_ENV=production webpack --progress --colors --config .electron-vue/webpack.renderer.config.js"
   },
   "build": {
     "productName": "i古诗词",
@@ -60,6 +58,7 @@
     "fs": "^0.0.1-security",
     "fs-extra": "^8.1.0",
     "html2canvas": "^1.0.0-rc.3",
+    "sqlite3": "^4.0.9",
     "vue": "^2.5.16",
     "vue-aplayer": "^1.6.1",
     "vue-electron": "^1.0.6",
