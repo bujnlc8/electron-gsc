@@ -43,7 +43,11 @@
             </el-col>
             <el-col :span="3">
               <div class="grid-content content-right">
-                <i class="el-icon-view" v-if="current_gsc && current_gsc.id == gsc.id" style="margin-right:1em;"></i>
+                <i
+                  class="el-icon-view"
+                  v-if="current_gsc && current_gsc.id == gsc.id"
+                  style="margin-right:1em;"
+                ></i>
                 <i class="el-icon-service" v-else-if="gsc.audio_id > 0" style="margin-right:1em;"></i>
               </div>
             </el-col>
@@ -153,10 +157,10 @@ const path = require("path");
 const { remote, ipcRenderer } = require("electron");
 const { Menu, MenuItem, clipboard, BrowserWindow, nativeImage, app } = remote;
 const userDataPath = app.getPath("userData");
-let config_url = path.join(
-      userDataPath,
-      "./USERCONFIG/config.json"
-    );
+let config_url = path.join(userDataPath, "./USERCONFIG/config.json");
+let sqlite3 = require("sqlite3").verbose();
+let dbFilePath = path.resolve(__dirname, "../assets/gsc.db");
+let db = new sqlite3.Database(dbFilePath);
 const menu = new Menu();
 menu.append(
   new MenuItem({
@@ -350,19 +354,19 @@ export default {
         this.cn2twgsc(this.current_gsc);
       }
     });
-    ipcRenderer.on("clear_auto_search", (event, clear_auto_search)=>{
-      this.clear_auto_search = clear_auto_search
-    })
-    ipcRenderer.on("offline_search", (event, offline_search)=>{
-      this.offline_search = offline_search
-    })
+    ipcRenderer.on("clear_auto_search", (event, clear_auto_search) => {
+      this.clear_auto_search = clear_auto_search;
+    });
+    ipcRenderer.on("offline_search", (event, offline_search) => {
+      this.offline_search = offline_search;
+    });
   },
   methods: {
-    clear_search(){
-      if(this.clear_auto_search){
-        this.search()
+    clear_search() {
+      if (this.clear_auto_search) {
+        this.search();
       }
-      return true
+      return true;
     },
     cn2twgsc(gsc_obj) {
       gsc_obj.work_title = jf_convert.cn2tw(gsc_obj.work_title);
@@ -395,6 +399,36 @@ export default {
       this.search();
     },
     do_content(gsc_obj) {
+      if(!gsc_obj.annotation){
+          gsc_obj.annotation = ""
+      }
+      if(!gsc_obj.appreciation){
+          gsc_obj.appreciation = ""
+      }
+      if(!gsc_obj.content){
+          gsc_obj.content = ""
+      }
+      if(!gsc_obj.foreword){
+          gsc_obj.foreword = ""
+      }
+      if(!gsc_obj.intro){
+          gsc_obj.intro = ""
+      }
+      if(!gsc_obj.master_comment){
+          gsc_obj.master_comment = ""
+      }
+      if(!gsc_obj.translation){
+          gsc_obj.translation = ""
+      }
+      if(!gsc_obj.work_author){
+          gsc_obj.work_author = ""
+      }
+      if(!gsc_obj.work_dynasty){
+          gsc_obj.work_dynasty = ""
+      }
+      if(!gsc_obj.work_title){
+          gsc_obj.work_title = ""
+      }
       // 句号
       let period_index = gsc_obj.content.indexOf("。");
       if (period_index == -1) {
@@ -418,42 +452,24 @@ export default {
         gsc_obj.short_content = gsc_obj.content.slice(0, period_index + 1);
       }
       if (gsc_obj.layout == "indent") {
-        gsc_obj.content = gsc_obj.content.replace(/\n/g, "</br>&emsp;&emsp;");
-        gsc_obj.content = gsc_obj.content.replace(/\t/g, "</br>&emsp;&emsp;");
+        gsc_obj.content = gsc_obj.content.replace(/\t|\n|\r/g, "</br>&emsp;&emsp;");
       } else {
-        gsc_obj.content = gsc_obj.content.replace(/\n/g, "</br>");
-        gsc_obj.content = gsc_obj.content.replace(/\t/g, "</br>");
+        gsc_obj.content = gsc_obj.content.replace(/\t|\n|\r/g, "</br>");
       }
       gsc_obj.translation = gsc_obj.translation.replace(
-        /\n/g,
-        "</br>&emsp;&emsp;"
-      );
-      gsc_obj.translation = gsc_obj.translation.replace(
-        /\t/g,
+        /\t|\n|\r/g,
         "</br>&emsp;&emsp;"
       );
       gsc_obj.annotation = gsc_obj.annotation.replace(
-        /\n/g,
-        "</br>&emsp;&emsp;"
-      );
-      gsc_obj.annotation = gsc_obj.annotation.replace(
-        /\t/g,
+        /\t|\n|\r/g,
         "</br>&emsp;&emsp;"
       );
       gsc_obj.appreciation = gsc_obj.appreciation.replace(
-        /\n/g,
-        "</br>&emsp;&emsp;"
-      );
-      gsc_obj.appreciation = gsc_obj.appreciation.replace(
-        /\t/g,
+        /\t|\n|\r/g,
         "</br>&emsp;&emsp;"
       );
       gsc_obj.master_comment = gsc_obj.master_comment.replace(
-        /\n/g,
-        "</br>&emsp;&emsp;"
-      );
-      gsc_obj.master_comment = gsc_obj.master_comment.replace(
-        /\t/g,
+        /\t|\n|\r/g,
         "</br>&emsp;&emsp;"
       );
       gsc_obj.intro = gsc_obj.intro.replace(/\n/g, "</br>&emsp;&emsp;");
@@ -493,36 +509,90 @@ export default {
         });
       }
     },
-    search() {
-      let url = ApiUrl.home;
-      if (this.input) {
-        url = ApiUrl.search.format(this.input);
+    do_gscs(gscs) {
+      for (let i = 0; i < gscs.length; i++) {
+        let gsc_obj = gscs[i];
+        this.do_content(gsc_obj);
       }
+      this.gscs = gscs;
+      if (this.gscs.length > 0 && !this.current_gsc) {
+        this.open_gsc(this.gscs[0].id);
+      }
+      this.gsc_length = this.gscs.length;
+    },
+    search() {
+      // 离线搜索
       this.loading = true;
-      this.$http
-        .get(url)
-        .then(response => {
-          let d = response.data;
-          if (d.code != 0) {
-            this.show_notify();
+      let that = this
+      if (this.offline_search) {
+        let sql = "select * from gsc where audio_id > 0 order by random() limit 30"
+        if(this.input){
+          sql = ("select * from gsc where work_title like '%{0}%' or " + 
+          " work_author like '%{1}%' or content like '%{2}%' or " +
+          " foreword like '%{3}%'").format(this.value, this.value, this.value, this.value)
+        }
+        db.all(sql, function(
+          e,
+          row
+        ) {
+          if (e) {
+            that.show_notify();
+            that.loading = false;
           } else {
-            for (let i = 0; i < d.data.data.length; i++) {
-              let gsc_obj = d.data.data[i];
-              this.do_content(gsc_obj);
-            }
-            this.gscs = d.data.data;
-            if (this.gscs.length > 0 && !this.current_gsc) {
-              this.open_gsc(this.gscs[0].id);
-            }
-            this.gsc_length = this.gscs.length
-            this.loading = false;
+            that.do_gscs(row);
+            that.loading = false;
           }
-        })
-        .catch(e => {
-          this.show_notify();
         });
+      } else {
+        let url = ApiUrl.home;
+        if (this.input) {
+          url = ApiUrl.search.format(this.input);
+        }
+        this.$http
+          .get(url)
+          .then(response => {
+            let d = response.data;
+            if (d.code != 0) {
+              this.show_notify();
+              this.loading = false;
+            } else {
+              this.do_gscs(d.data.data);
+              this.loading = false;
+            }
+          })
+          .catch(e => {
+            this.show_notify();
+            this.loading = false;
+          });
+      }
+    },
+    do_open_gsc(gsc){
+        this.current_gsc = this.do_content(gsc);
+        this.musicList = {
+          title: this.current_gsc.work_title,
+          artist: this.current_gsc.work_author,
+          src: "https://songci.nos-eastchina1.126.net/audio/{0}.m4a".format(
+            this.current_gsc.audio_id
+          ),
+          pic:
+            "https://qcloudtest-1256650966.cos.ap-guangzhou.myqcloud.com/avatar.jpeg"
+        };
+        if (this.current_gsc.intro) {
+          this.activeName = "intro";
+        } else if (this.current_gsc.annotation) {
+          this.activeName = "annotation";
+        } else if (this.current_gsc.translation) {
+          this.activeName = "translation";
+        } else if (this.current_gsc.appreciation) {
+          this.activeName = "appreciation";
+        } else if (this.current_gsc.master_comment) {
+          this.activeName = "master_comment";
+        } else {
+          this.activeName = "";
+      }
     },
     open_gsc(id_) {
+      if(!this.offline_search){
       let url = ApiUrl.detail.format(id_);
       this.$http
         .get(url)
@@ -531,34 +601,22 @@ export default {
           if (d.code != 0) {
             this.show_notify();
           } else {
-            this.current_gsc = this.do_content(d.data.data);
-            this.musicList = {
-              title: this.current_gsc.work_title,
-              artist: this.current_gsc.work_author,
-              src: "https://songci.nos-eastchina1.126.net/audio/{0}.m4a".format(
-                this.current_gsc.audio_id
-              ),
-              pic:
-                "https://qcloudtest-1256650966.cos.ap-guangzhou.myqcloud.com/avatar.jpeg"
-            };
-            if (this.current_gsc.intro) {
-              this.activeName = "intro";
-            } else if (this.current_gsc.annotation) {
-              this.activeName = "annotation";
-            } else if (this.current_gsc.translation) {
-              this.activeName = "translation";
-            } else if (this.current_gsc.appreciation) {
-              this.activeName = "appreciation";
-            } else if (this.current_gsc.master_comment) {
-              this.activeName = "master_comment";
-            } else {
-              this.activeName = "";
-            }
+            this.do_open_gsc(d.data.data)
           }
         })
         .catch(e => {
           this.show_notify();
         });
+      }else{
+        let sql = "select * from gsc where id={0}".format(id_)
+        db.get(sql, (e, row)=>{
+          if(e){
+            this.show_notify();
+          }else{
+            this.do_open_gsc(row)
+          }
+        })
+      }
     }
   },
   created() {
@@ -575,12 +633,11 @@ export default {
       }
     });
     // 设置简繁体
-    
     if (fs.existsSync(config_url)) {
       try {
         let result = fs.readFileSync(config_url);
         result = JSON.parse(result);
-        if(result.__chinese__){
+        if (result.__chinese__) {
           this.chinese = result.__chinese__;
         }
       } catch (error) {
