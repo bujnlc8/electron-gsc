@@ -24,7 +24,9 @@
     "files": [
       "dist/electron/**/*"
     ],
-    "extraResources": ["gsc.db"],
+    "extraResources": [
+      "gsc.db"
+    ],
     "dmg": {
       "contents": [
         {
@@ -63,11 +65,14 @@
     "vue": "^2.5.16",
     "vue-aplayer": "^1.6.1",
     "vue-electron": "^1.0.6",
-    "vue-router": "^3.0.1",
-    "vuex": "^3.0.1",
-    "vuex-electron": "^1.0.0"
+    "vue-router": "^3.0.1"
   },
   "devDependencies": {
+    "abbrev": "^1.1.1",
+    "ajv": "^6.10.0",
+    "ansi-regex": "^4.1.0",
+    "aproba": "^2.0.0",
+    "are-we-there-yet": "^1.1.5",
     "babel-core": "^6.26.3",
     "babel-loader": "^7.1.4",
     "babel-plugin-istanbul": "^4.1.6",

@@ -10,13 +10,19 @@
 
 ``` bash
 # 安装依赖
-npm install
+sudo yarn install
+
+重新编译sqlite3
+
+sudo cnpm install sqlite3 --build-from-source --runtime=electron --target=2.0.4 --dist-url=https://atom.io/download/electron --module_name=node_sqlite3 --module_path=../lib/binding/electron-v2.0-darwin-x64
+
+如果遇到报错，先删除node_modules
 
 # 本地开发
-npm run dev
+yarn run dev
 
 # 编译
-npm run build
+yarn run build
 ```
 
 ### 直接上图

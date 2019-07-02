@@ -39,7 +39,8 @@
         <div v-for="gsc in gscs" v-bind:key="gsc.id" class="gsc-div" @click="open_gsc(gsc.id)">
           <el-row>
             <el-col :span="20">
-              <div class="grid-content">{{gsc.work_title}}</div>
+              <div class="grid-content">{{gsc.work_title}} <i class="el-icon-link" 
+              v-if="current_gsc.baidu_wiki" @click="showBaidu(current_gsc.baidu_wiki)"></i></div>
             </el-col>
             <el-col :span="3">
               <div class="grid-content content-right">
@@ -382,6 +383,13 @@ export default {
     });
   },
   methods: {
+    showBaidu(baidu_wiki){
+      let win = new BrowserWindow({
+        width: 1000,
+        height: 800
+      });
+      win.loadURL(baidu_wiki);
+    },
     clear_search() {
       if (this.clear_auto_search) {
         this.search();
