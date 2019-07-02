@@ -234,7 +234,7 @@ const set_menu = () => {
               writeFile(config_url, content);
             }
           }, {
-            label: "明黄",
+            label: "祥云",
             type: "radio",
             checked: dark_mode == "light-yellow",
             accelerator: 'ctrl+shift+y',

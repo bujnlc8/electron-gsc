@@ -40,7 +40,7 @@
           <el-row>
             <el-col :span="20">
               <div class="grid-content">{{gsc.work_title}} <i class="el-icon-link" 
-              v-if="current_gsc.baidu_wiki" @click="showBaidu(current_gsc.baidu_wiki)"></i></div>
+              v-if="current_gsc.baidu_wiki" @click="showBaidu(current_gsc.baidu_wiki)" style="margin-left:1em;"></i></div>
             </el-col>
             <el-col :span="3">
               <div class="grid-content content-right">
@@ -234,7 +234,7 @@ menu.append(
         return;
       }
       let win = new BrowserWindow({
-        width: 1000,
+        width: 1200,
         height: 800
       });
       win.loadURL("https://www.google.com/search?q={0}".format(selectedText));
@@ -252,7 +252,7 @@ menu.append(
         return;
       }
       let win = new BrowserWindow({
-        width: 1000,
+        width: 1200,
         height: 800
       });
       win.loadURL(
@@ -272,7 +272,7 @@ menu.append(
         return;
       }
       let win = new BrowserWindow({
-        width: 1000,
+        width: 1200,
         height: 800
       });
       win.loadURL(
@@ -385,7 +385,7 @@ export default {
   methods: {
     showBaidu(baidu_wiki){
       let win = new BrowserWindow({
-        width: 1000,
+        width: 1200,
         height: 800
       });
       win.loadURL(baidu_wiki);

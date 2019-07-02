@@ -110,9 +110,14 @@ export default {
 
 .aplayer-info{
   font-family: "songti";
-  background-color:rgba(253, 253, 253, 0.1); 
+  background-color:rgba(250, 250, 250, 0.1); 
   color: #93816d
 }
+
+.aplayer-info:hover{
+  background-color:rgba(250, 250, 250, 0.8); 
+}
+
 .el-input__inner {
   border-radius: 20px !important;
   border: none !important;
