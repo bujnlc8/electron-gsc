@@ -158,9 +158,29 @@ const { remote, ipcRenderer } = require("electron");
 const { Menu, MenuItem, clipboard, BrowserWindow, nativeImage, app } = remote;
 const userDataPath = app.getPath("userData");
 let config_url = path.join(userDataPath, "./USERCONFIG/config.json");
-let sqlite3 = require("sqlite3").verbose();
-let dbFilePath = path.resolve(__dirname, "../assets/gsc.db");
-let db = new sqlite3.Database(dbFilePath);
+var log = require('electron-log');
+let sqlite3 = null
+let dbFilePath = ""
+try{
+    sqlite3 = require("sqlite3").verbose();
+    dbFilePath = path.join(app.getAppPath(), '../gsc.db');
+}catch(e){
+    log.error(e, dbFilePath)
+}
+if(process.env.NODE_ENV !== "production"){
+  console.log(__dirname, __static)
+  dbFilePath = path.join(__static, "../gsc.db");
+}
+let db = null
+try{
+ db = new sqlite3.Database(dbFilePath, sqlite3.OPEN_READONLY, function(e){
+   if(e){
+     log.error(e)
+   }
+ });
+}catch(e){
+  log.error(e)
+}
 const menu = new Menu();
 menu.append(
   new MenuItem({
@@ -529,19 +549,18 @@ export default {
         if(this.input){
           sql = ("select * from gsc where work_title like '%{0}%' or " + 
           " work_author like '%{1}%' or content like '%{2}%' or " +
-          " foreword like '%{3}%'").format(this.value, this.value, this.value, this.value)
+          " foreword like '%{3}%'").format(this.input, this.input, this.input, this.input)
         }
-        db.all(sql, function(
-          e,
-          row
-        ) {
-          if (e) {
-            that.show_notify();
-            that.loading = false;
-          } else {
-            that.do_gscs(row);
-            that.loading = false;
-          }
+        db.parallelize(function(){
+            db.all(sql, [], function(e,row) {
+              if (e) {
+                that.show_notify();
+                that.loading = false;
+              } else {
+                that.do_gscs(row);
+                that.loading = false;
+              }
+            });
         });
       } else {
         let url = ApiUrl.home;

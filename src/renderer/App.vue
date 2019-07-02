@@ -3,7 +3,7 @@
     <div class="titlebar" v-if="platform =='darwin'"></div>
     <div v-loading="body_loading" 
   element-loading-fullscreen="true" element-loading-background="rgba(0, 0, 0, 0.9)"
-  element-loading-text="用力加载中..." style="height:592px;" 
+  element-loading-text="全力加载中..." style="height:592px;" 
   v-if="body_loading"></div>
     <router-view></router-view>
   </div>

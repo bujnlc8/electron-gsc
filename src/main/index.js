@@ -100,7 +100,6 @@ function createWindow() {
     if (fs.existsSync(config_url)) {
       let result = fs.readFileSync(config_url)
       result = JSON.parse(result)
-      console.log(result, 'gg')
       // 加载清除后是否自动搜索
       clear_auto_search = result.__clear_auto_search__ ? result.__clear_auto_search__ : clear_auto_search
       // 加载是否离线搜索
@@ -174,11 +173,12 @@ const set_menu = () => {
       label: "i古诗词",
       submenu: [{
           label: '关于',
-          accelerator: 'ctrl+j',
+          accelerator: 'ctrl+g',
           click: function () {
             let win = new BrowserWindow({
               width: 380,
-              height: 300
+              height: 300,
+              titleBarStyle: 'hidden'
             })
             win.loadURL(`file://${__static}/about.html`)
           }
