@@ -3,7 +3,7 @@
     <el-container :style="container_style">
       <el-aside width="480px">
         <el-row style="position:fixed;z-index:999;width:460px;">
-          <el-col :span="19">
+          <el-col :span="18">
             <el-input
               v-loading="loading"
               element-loading-text="用力搜索中..."
@@ -25,14 +25,27 @@
             >搜索</el-button>
           </el-col>
         </el-row>
-        <el-row style="margin-top:3rem;" v-if="gsc_length > 0">
+        <el-row style="position:fixed;z-index:999; margin-top:3rem;font-family:songti;">
+          <el-col>
+            <el-switch 
+            :disabled="!offline_search"
+            @change="search()"
+            v-model="filter_like"
+            active-color="#13ce66"
+            inactive-color="#93816d"
+            active-text="只是喜欢"
+            inactive-text="全部包含">
+          </el-switch>
+          </el-col>
+        </el-row>
+        <el-row style="margin-top:5rem;" v-if="gsc_length > 0">
           <el-col :span="23">
             <div class="grid-content">
               <label>搜索結果({{ gsc_length }})</label>
             </div>
           </el-col>
         </el-row>
-        <el-row style="margin-top:3rem;" v-if="gsc_length == 0">
+        <el-row style="margin-top:5rem;" v-if="gsc_length == 0">
           <el-col :span="23" v-if="chinese=='cn'">暂无搜索结果，请尝试其他输入吧~</el-col>
           <el-col :span="23" v-if="chinese=='tw'">暫無搜索結果，請嘗試其他輸入吧~</el-col>
         </el-row>
@@ -124,6 +137,12 @@
             <el-tab-pane label="辑评" name="master_comment" v-if="current_gsc.master_comment!=''">
               <div v-html="current_gsc.master_comment" class="indent"></div>
             </el-tab-pane>
+            <el-tab-pane disabled>
+              <span slot="label">
+                <img  v-if="is_liked == 0" @click="operate_like_gsc(current_gsc.id, 1)" style="height:16px;width:16px;" src="../../../static/like.png"/>
+                <img  v-else-if="is_liked == 1" @click="operate_like_gsc(current_gsc.id, 0)"  style="height:16px;width:16px;" src="../../../static/liked.png"/>
+                </span>
+            </el-tab-pane>
           </el-tabs>
           <el-tabs v-model="activeName" v-if="chinese == 'tw'">
             <el-tab-pane label="評析" name="intro" v-if="current_gsc.intro !=''">
@@ -141,6 +160,12 @@
             <el-tab-pane label="輯評" name="master_comment" v-if="current_gsc.master_comment!=''">
               <div v-html="current_gsc.master_comment" class="indent"></div>
             </el-tab-pane>
+            <el-tab-pane disabled>
+              <span slot="label">
+                <img  v-if="is_liked == 0" @click="operate_like_gsc(current_gsc.id, 1)" style="height:16px;width:16px;" src="../../../static/like.png"/>
+                <img  v-else-if="is_liked == 1" @click="operate_like_gsc(current_gsc.id, 0)"  style="height:16px;width:16px;" src="../../../static/liked.png"/>
+                </span>
+            </el-tab-pane>
           </el-tabs>
         </el-main>
       </el-container>
@@ -157,31 +182,9 @@ const fs = require("fs");
 const path = require("path");
 const { remote, ipcRenderer } = require("electron");
 const { Menu, MenuItem, clipboard, BrowserWindow, nativeImage, app } = remote;
+const db = remote.getGlobal("__db__")
 const userDataPath = app.getPath("userData");
 let config_url = path.join(userDataPath, "./USERCONFIG/config.json");
-var log = require('electron-log');
-let sqlite3 = null
-let dbFilePath = ""
-try{
-    sqlite3 = require("sqlite3").verbose();
-    dbFilePath = path.join(app.getAppPath(), '../gsc.db');
-}catch(e){
-    log.error(e, dbFilePath)
-}
-if(process.env.NODE_ENV !== "production"){
-  console.log(__dirname, __static)
-  dbFilePath = path.join(__static, "../gsc.db");
-}
-let db = null
-try{
- db = new sqlite3.Database(dbFilePath, sqlite3.OPEN_READONLY, function(e){
-   if(e){
-     log.error(e)
-   }
- });
-}catch(e){
-  log.error(e)
-}
 const menu = new Menu();
 menu.append(
   new MenuItem({
@@ -315,8 +318,15 @@ export default {
       container_style: { height: "612px" },
       chinese: "cn",
       clear_auto_search: false,
-      offline_search: false
+      offline_search: true,
+      is_liked: 0,
+      filter_like: false
     };
+  },
+  watch:{
+    current_gsc: function(v, old_v){
+      this.is_liked = v.like
+    }
   },
   mounted() {
     let that = this;
@@ -383,6 +393,17 @@ export default {
     });
   },
   methods: {
+    operate_like_gsc(gsc_id, op){
+      db.run("UPDATE gsc set like = ? WHERE id = ?", op, gsc_id, (e)=>{
+        if(e){
+          this.show_notify(message="操作失败")
+        }else{
+          this.show_notify("success", "提醒", (op==1 ? '喜欢' : '取消') + '成功')
+          this.current_gsc.like = op
+          this.is_liked  = op
+        }
+      })
+    },
     showBaidu(baidu_wiki){
       let win = new BrowserWindow({
         width: 1200,
@@ -479,25 +500,27 @@ export default {
       } else {
         gsc_obj.short_content = gsc_obj.content.slice(0, period_index + 1);
       }
+      gsc_obj.short_content = gsc_obj.short_content.replace(/\\r/g, "")
       if (gsc_obj.layout == "indent") {
-        gsc_obj.content = gsc_obj.content.replace(/\t|\n|\r/g, "</br>&emsp;&emsp;");
+        gsc_obj.content = gsc_obj.content.replace(/(\t|\n|\r)/g, "</br>&emsp;&emsp;");
       } else {
-        gsc_obj.content = gsc_obj.content.replace(/\t|\n|\r/g, "</br>");
+        gsc_obj.content = gsc_obj.content.replace(/(\t|\n|\r)/g, "</br>");
       }
+      gsc_obj.content = gsc_obj.content.replace(/\\r/g, "")
       gsc_obj.translation = gsc_obj.translation.replace(
-        /\t|\n|\r/g,
+        /(\t|\n|\r)/g,
         "</br>&emsp;&emsp;"
       );
       gsc_obj.annotation = gsc_obj.annotation.replace(
-        /\t|\n|\r/g,
+        /(\t|\n|\r)/g,
         "</br>&emsp;&emsp;"
       );
       gsc_obj.appreciation = gsc_obj.appreciation.replace(
-        /\t|\n|\r/g,
+        /(\t|\n|\r)/g,
         "</br>&emsp;&emsp;"
       );
       gsc_obj.master_comment = gsc_obj.master_comment.replace(
-        /\t|\n|\r/g,
+        /(\t|\n|\r)/g,
         "</br>&emsp;&emsp;"
       );
       gsc_obj.intro = gsc_obj.intro.replace(/\n/g, "</br>&emsp;&emsp;");
@@ -554,10 +577,16 @@ export default {
       let that = this
       if (this.offline_search) {
         let sql = "select * from gsc where audio_id > 0 order by random() limit 30"
+        if(this.filter_like){
+            sql = "select * from gsc where `like` = 1 order by audio_id desc"
+        }
         if(this.input){
-          sql = ("select * from gsc where work_title like '%{0}%' or " + 
+          sql = ("select * from gsc where (work_title like '%{0}%' or " + 
           " work_author like '%{1}%' or content like '%{2}%' or " +
-          " foreword like '%{3}%'").format(this.input, this.input, this.input, this.input)
+          " foreword like '%{3}%' ) ").format(this.input, this.input, this.input, this.input)
+          if(this.filter_like){
+            sql += " and `like` = 1 "
+          }
         }
         db.parallelize(function(){
             db.all(sql, [], function(e,row) {

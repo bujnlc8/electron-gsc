@@ -1,3 +1,6 @@
+const fs = require("fs")
+
+// format语法糖
 String.prototype.format = function () {
     if (arguments.length == 0) return this;
     for (var s = this, i = 0; i < arguments.length; i++)
@@ -5,7 +8,7 @@ String.prototype.format = function () {
     return s;
 };
 
-const fs = require("fs")
+// 写文件
 
 const writeFile = (file_url, content) => {
     if (!fs.existsSync(file_url)) {
@@ -20,6 +23,4 @@ const writeFile = (file_url, content) => {
     }
 }
 
-export {
-    writeFile
-}
+export {writeFile}

@@ -16,7 +16,7 @@ if (process.env.NODE_ENV !== 'development') {
 }
 
 import {writeFile} from "../renderer/util"
-
+const log = require('electron-log');
 const path = require("path")
 const fs = require("fs")
 const xfs = require("fs-extra")
@@ -25,7 +25,7 @@ if (!fs.existsSync(path.join(userDataPath, "./USERCONFIG"))) {
   try {
     xfs.ensureDirSync(path.join(userDataPath, "./USERCONFIG"))
   } catch (e) {
-    console.log(e)
+    log.err(e)
   }
 }
 
@@ -76,26 +76,30 @@ function createWindow() {
     mainWindow.webContents.send('offline_search', offline_search);
   })
   // 托盘
-  const tray = new Tray(path.join(__static, './icon.png'))
-  tray.setToolTip('i古诗词')
-  mainWindow.on('closed', () => {
-    mainWindow = null
-    tray.destroy()
-  })
-  tray.on("click", () => {
-    if (mainWindow != null) {
-      mainWindow.show()
-    } else {
+  try{
+    const tray = new Tray(path.join(__static, './icon.png'))
+    tray.setToolTip('i古诗词')
+    mainWindow.on('closed', () => {
+      mainWindow = null
       tray.destroy()
-    }
-  })
-  tray.on("drop", () => {
-    if (mainWindow != null) {
-      mainWindow.show()
-    } else {
-      tray.destroy()
-    }
-  });
+    })
+    tray.on("click", () => {
+      if (mainWindow != null) {
+        mainWindow.show()
+      } else {
+        tray.destroy()
+      }
+    })
+    tray.on("drop", () => {
+      if (mainWindow != null) {
+        mainWindow.show()
+      } else {
+        tray.destroy()
+      }
+    });
+  }catch(e){
+    log.error(e)
+  }
   try {
     if (fs.existsSync(config_url)) {
       let result = fs.readFileSync(config_url)
@@ -112,10 +116,12 @@ function createWindow() {
       chinese = result.__chinese__ ? result.__chinese__ : chinese
     }
   } catch (e) {
-    console.log(e)
+    log.error(e)
   }
   // 设置菜单
   set_menu()
+  // 设置数据库
+  createDB()
 }
 
 // 右键按钮
@@ -401,4 +407,18 @@ const set_menu = () => {
   ]
   let m = Menu.buildFromTemplate(menus)
   Menu.setApplicationMenu(m)
+}
+
+const createDB = ()=>{
+  let sqlite3 = require("sqlite3").verbose();
+  let dbFilePath = path.join(app.getAppPath(), '../gsc.db');
+  if(process.env.NODE_ENV !== "production"){
+    log.error(__dirname, __static)
+    dbFilePath = path.join(__static, "../gsc.db")
+  }
+  global.__db__ = new sqlite3.Database(dbFilePath, (e)=>{
+      if(e){
+          log.error(e)
+      }
+  })
 }

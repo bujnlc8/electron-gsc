@@ -153,6 +153,10 @@ background-color: #93816d !important;
 border-color: #93816d !important;
 opacity: 0.7;
 }
+
+.el-button--primary:hover{
+opacity: 0.85;
+}
 .el-loading-spinner .path{
  stroke: #93816d !important;
 }
