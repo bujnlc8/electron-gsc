@@ -11,6 +11,7 @@ const webpackHotMiddleware = require('webpack-hot-middleware')
 
 const mainConfig = require('./webpack.main.config')
 const rendererConfig = require('./webpack.renderer.config')
+const detailConfig = require('./webpack.detail.config')
 
 let electronProcess = null
 let manualRestart = false
@@ -42,7 +43,7 @@ function startRenderer () {
   return new Promise((resolve, reject) => {
     rendererConfig.entry.renderer = [path.join(__dirname, 'dev-client')].concat(rendererConfig.entry.renderer)
     rendererConfig.mode = 'development'
-    const compiler = webpack(rendererConfig)
+    let compiler = webpack(rendererConfig)
     hotMiddleware = webpackHotMiddleware(compiler, {
       log: false,
       heartbeat: 2500
@@ -58,7 +59,19 @@ function startRenderer () {
     compiler.hooks.done.tap('done', stats => {
       logStats('Renderer', stats)
     })
-
+    // 生成详情
+    detailConfig.entry.detail = [path.join(__dirname, 'dev-client')].concat(detailConfig.entry.detail)
+    detailConfig.mode = 'development'
+    let compiler2 = webpack(detailConfig, (err, stats) => {
+      logStats("Detail", stats)
+    })
+    
+    compiler2.hooks.compilation.tap('compilation', compilation => {
+      compilation.hooks.htmlWebpackPluginAfterEmit.tapAsync('html-webpack-plugin-after-emit', (data, cb) => {
+        hotMiddleware.publish({ action: 'reload' })
+        cb()
+      })
+    })
     const server = new WebpackDevServer(
       compiler,
       {
@@ -72,8 +85,22 @@ function startRenderer () {
         }
       }
     )
-
+    
     server.listen(9080)
+    const server2 = new WebpackDevServer(
+      compiler2,
+      {
+        contentBase: path.join(__dirname, '../'),
+        quiet: true,
+        before (app, ctx) {
+          app.use(hotMiddleware)
+          ctx.middleware.waitUntilValid(() => {
+            resolve()
+          })
+        }
+      }
+    )
+    server2.listen(9090)
   })
 }
 
