@@ -18,7 +18,7 @@ if (process.env.NODE_ENV !== 'development') {
 import {
   writeFile
 } from "../renderer/util"
-const log = require('electron-log');
+const log = require('electron-log')
 const path = require("path")
 const fs = require("fs")
 const xfs = require("fs-extra")
@@ -502,7 +502,7 @@ const set_menu = () => {
 
 const createDB = () => {
   let sqlite3 = require("sqlite3").verbose();
-  let dbFilePath = path.join(app.getAppPath(), '../db/gsc.db');
+  let dbFilePath = path.join(app.getAppPath(), '../gsc.db');
   if (process.env.NODE_ENV !== "production") {
     log.error(__dirname, __static)
     dbFilePath = path.join(__static, "../gsc.db")

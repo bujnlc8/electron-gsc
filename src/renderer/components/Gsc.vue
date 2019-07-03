@@ -336,7 +336,7 @@ export default {
   },
   methods: {
     operate_like_gsc(gsc_id, op){
-      db.run("UPDATE gsc set `like` = ? WHERE id = ?", op, gsc_id, (e)=>{
+      db.run("UPDATE gsc set like = ? WHERE id = ?", op, gsc_id, (e)=>{
         if(e){
           this.show_notify(message="操作失败")
         }else{

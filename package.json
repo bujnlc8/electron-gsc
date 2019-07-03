@@ -25,10 +25,7 @@
     "files": [
       "dist/electron/**/*"
     ],
-    "extraResources": [{
-      "from": "gsc_db",
-      "to": "db/gsc.db" }
-    ],
+    "extraResources": ["gsc.db"],
     "dmg": {
       "contents": [
         {
@@ -65,10 +62,10 @@
     "fs-extra": "^8.1.0",
     "html2canvas": "^1.0.0-rc.3",
     "sqlite3": "^4.0.9",
-    "vue": "^2.5.16",
     "vue-aplayer": "^1.6.1",
-    "vue-electron": "^1.0.6",
-    "vue-router": "^3.0.1"
+    "vue": "^2.5.16",
+    "vue-router": "^3.0.1",
+    "vue-electron": "^1.0.6"
   },
   "devDependencies": {
     "abbrev": "^1.1.1",

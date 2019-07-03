@@ -64,7 +64,7 @@ let detailConfig = {
           loader: 'url-loader',
           query: {
             limit: 10000,
-            name: 'imgs/[name]-[hash].[ext]'
+            name: 'imgs/[name]-[folder].[ext]'
           }
         }
       },
@@ -74,7 +74,7 @@ let detailConfig = {
           loader: 'url-loader',
           query: {
             limit: 10000,
-            name: 'fonts/[name]-[hash].[ext]'
+            name: 'fonts/[name]-[folder].[ext]'
           }
         }
       }

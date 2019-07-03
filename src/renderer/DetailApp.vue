@@ -15,6 +15,7 @@
 import {ipcRenderer, remote} from  'electron'
 import {beautifyGsc} from './util'
 const db = remote.getGlobal("__db__")
+const log = require('electron-log');
 export default {
     name: "DetailApp",
     data(){
@@ -32,12 +33,14 @@ export default {
   },
     methods:{
         operate_like_gsc(gsc_id, op){
-            db.run("UPDATE gsc set `like` = ? WHERE id = ?", op, gsc_id, (e)=>{
+            db.run("UPDATE gsc set like = ? WHERE id = ?", op, gsc_id, (e)=>{
                 if(!e){
                 //this.gsc.like = op
                 this.is_liked  = op
+                }else{
+                  log.error(e)  
                 }
-            })
+        })
      }
     },
     created(){
