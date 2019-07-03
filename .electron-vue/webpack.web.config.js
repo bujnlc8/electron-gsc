@@ -64,7 +64,7 @@ let webConfig = {
           loader: 'url-loader',
           query: {
             limit: 10000,
-            name: 'imgs/[name].[ext]'
+            name: 'imgs/[name]-[hash].[ext]'
           }
         }
       },
@@ -74,7 +74,7 @@ let webConfig = {
           loader: 'url-loader',
           query: {
             limit: 10000,
-            name: 'fonts/[name].[ext]'
+            name: 'fonts/[name]-[hash].[ext]'
           }
         }
       }

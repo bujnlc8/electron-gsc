@@ -3,7 +3,7 @@
     <el-container :style="container_style">
       <el-aside width="480px">
         <el-row style="position:fixed;z-index:999;width:460px;">
-          <el-col :span="19">
+          <el-col :span="18">
             <el-input
               v-loading="loading"
               element-loading-text="用力搜索中..."
@@ -25,14 +25,27 @@
             >搜索</el-button>
           </el-col>
         </el-row>
-        <el-row style="margin-top:3rem;" v-if="gsc_length > 0">
+        <el-row style="position:fixed;z-index:999; margin-top:3rem;font-family:songti;">
+          <el-col>
+            <el-switch 
+            :disabled="!offline_search"
+            @change="search()"
+            v-model="filter_like"
+            active-color="#13ce66"
+            inactive-color="#93816d"
+            active-text="只是喜欢"
+            inactive-text="全部包含">
+          </el-switch>
+          </el-col>
+        </el-row>
+        <el-row style="margin-top:5rem;" v-if="gsc_length > 0">
           <el-col :span="23">
             <div class="grid-content">
               <label>搜索結果({{ gsc_length }})</label>
             </div>
           </el-col>
         </el-row>
-        <el-row style="margin-top:3rem;" v-if="gsc_length == 0">
+        <el-row style="margin-top:5rem;" v-if="gsc_length == 0">
           <el-col :span="23" v-if="chinese=='cn'">暂无搜索结果，请尝试其他输入吧~</el-col>
           <el-col :span="23" v-if="chinese=='tw'">暫無搜索結果，請嘗試其他輸入吧~</el-col>
         </el-row>
@@ -58,7 +71,7 @@
               <div class="grid-content">{{gsc.short_content}}</div>
             </el-col>
             <el-col :span="7">
-              <div class="grid-content content-right">[{{gsc.work_dynasty}}] {{gsc.work_author}}</div>
+              <div class="grid-content content-right">【{{gsc.work_dynasty}}】 {{gsc.work_author}}</div>
             </el-col>
           </el-row>
           <div class="seperate-div"></div>
@@ -72,6 +85,10 @@
               <el-col :span="24">
                 <div style="text-align:center;font-size:1.3em;">
                   <label @click="search_word(current_gsc.work_title)">{{current_gsc.work_title}}</label>
+                  <span slot="label" v-if="activeName.length == 0" id="like-icon">
+                <img  v-if="is_liked == 0" @click="operate_like_gsc(current_gsc.id, 1)" style="height:16px;width:16px;" src="../../../static/like.png"/>
+                <img  v-else-if="is_liked == 1" @click="operate_like_gsc(current_gsc.id, 0)"  style="height:16px;width:16px;" src="../../../static/liked.png"/>
+                </span>
                 </div>
               </el-col>
             </el-row>
@@ -89,7 +106,7 @@
               <el-col :span="24">
                 <div
                   v-html="current_gsc.foreword"
-                  style="font-size:0.8em;font-style:italic;text-indent: 2.5em;"
+                  style="font-size:0.8em;font-style:italic;text-indent: 2em;"
                 ></div>
               </el-col>
             </el-row>
@@ -124,6 +141,12 @@
             <el-tab-pane label="辑评" name="master_comment" v-if="current_gsc.master_comment!=''">
               <div v-html="current_gsc.master_comment" class="indent"></div>
             </el-tab-pane>
+            <el-tab-pane disabled v-if="activeName.length > 0">
+              <span slot="label">
+                <img  v-if="is_liked == 0" @click="operate_like_gsc(current_gsc.id, 1)" style="height:16px;width:16px;" src="../../../static/like.png"/>
+                <img  v-else-if="is_liked == 1" @click="operate_like_gsc(current_gsc.id, 0)"  style="height:16px;width:16px;" src="../../../static/liked.png"/>
+                </span>
+            </el-tab-pane>
           </el-tabs>
           <el-tabs v-model="activeName" v-if="chinese == 'tw'">
             <el-tab-pane label="評析" name="intro" v-if="current_gsc.intro !=''">
@@ -141,6 +164,12 @@
             <el-tab-pane label="輯評" name="master_comment" v-if="current_gsc.master_comment!=''">
               <div v-html="current_gsc.master_comment" class="indent"></div>
             </el-tab-pane>
+            <el-tab-pane disabled v-if="activeName.length > 0">
+              <span slot="label">
+                <img  v-if="is_liked == 0" @click="operate_like_gsc(current_gsc.id, 1)" style="height:16px;width:16px;" src="../../../static/like.png"/>
+                <img  v-else-if="is_liked == 1" @click="operate_like_gsc(current_gsc.id, 0)"  style="height:16px;width:16px;" src="../../../static/liked.png"/>
+                </span>
+            </el-tab-pane>
           </el-tabs>
         </el-main>
       </el-container>
@@ -149,6 +178,7 @@
 </template>
 <script>
 import { ApiUrl } from "../api.js";
+import {beautifyGsc} from "../util"
 import Aplayer from "vue-aplayer";
 import { throws } from "assert";
 import html2canvas from "html2canvas";
@@ -156,32 +186,8 @@ const jf_convert = require("chinese_convert");
 const fs = require("fs");
 const path = require("path");
 const { remote, ipcRenderer } = require("electron");
-const { Menu, MenuItem, clipboard, BrowserWindow, nativeImage, app } = remote;
-const userDataPath = app.getPath("userData");
-let config_url = path.join(userDataPath, "./USERCONFIG/config.json");
-var log = require('electron-log');
-let sqlite3 = null
-let dbFilePath = ""
-try{
-    sqlite3 = require("sqlite3").verbose();
-    dbFilePath = path.join(app.getAppPath(), '../gsc.db');
-}catch(e){
-    log.error(e, dbFilePath)
-}
-if(process.env.NODE_ENV !== "production"){
-  console.log(__dirname, __static)
-  dbFilePath = path.join(__static, "../gsc.db");
-}
-let db = null
-try{
- db = new sqlite3.Database(dbFilePath, sqlite3.OPEN_READONLY, function(e){
-   if(e){
-     log.error(e)
-   }
- });
-}catch(e){
-  log.error(e)
-}
+const { Menu, MenuItem, clipboard, BrowserWindow, nativeImage } = remote;
+const db = remote.getGlobal("__db__")
 const menu = new Menu();
 menu.append(
   new MenuItem({
@@ -309,80 +315,37 @@ export default {
       gsc_length: 0,
       loading: false,
       current_gsc: null,
-      musicList: null,
+      musicList: [],
       activeName: "",
       imgsrc: "",
       container_style: { height: "612px" },
       chinese: "cn",
       clear_auto_search: false,
-      offline_search: false
+      offline_search: true,
+      is_liked: 0,
+      filter_like: false,
     };
   },
+  watch:{
+    current_gsc: function(v, old_v){
+      this.is_liked = v.like
+    }
+  },
   mounted() {
-    let that = this;
-    ipcRenderer.on("capture_content", (event, message) => {
-      let color = "#FFFCEC";
-      if (this.$parent.dark_mode == "light-yellow") {
-        color = "whitesmoke";
-      } else if (this.$parent.dark_mode == "dark") {
-        color = "#93816d";
-      }
-      html2canvas(document.getElementById("mycapture"), {
-        backgroundColor: color
-      }).then(canvas => {
-        //this.imgsrc = canvas.toDataURL('image/png')
-        let data_url = canvas.toDataURL("image/png");
-        let native_img = nativeImage.createFromDataURL(data_url);
-        clipboard.writeImage(native_img);
-        this.show_notify("success", "提醒", "图片已经复制到剪贴板");
-      });
-    });
-    ipcRenderer.on("change-jianti", (event, arg) => {
-      this.chinese = "cn";
-      let divs = document.getElementsByClassName("grid-content");
-      for (let i = 0; i < divs.length; i++) {
-        divs[i].innerText = jf_convert.tw2cn(divs[i].innerText);
-      }
-      let tabs = document.getElementsByClassName("el-tabs__item");
-      for (let i = 0; i < tabs.length; i++) {
-        tabs[i].innerText = jf_convert.tw2cn(tabs[i].innerText);
-      }
-      let tabs2 = document.getElementsByClassName("el-tab-pane");
-      for (let i = 0; i < tabs2.length; i++) {
-        tabs2[i].innerHTML = jf_convert.tw2cn(tabs2[i].innerHTML);
-      }
-      if (this.current_gsc) {
-        this.tw2cngsc(this.current_gsc);
-      }
-    });
-    ipcRenderer.on("change-fanti", (event, arg) => {
-      this.chinese = "tw";
-      // 左边
-      let divs = document.getElementsByClassName("grid-content");
-      for (let i = 0; i < divs.length; i++) {
-        divs[i].innerText = jf_convert.cn2tw(divs[i].innerText);
-      }
-      // tabs
-      let tabs = document.getElementsByClassName("el-tabs__item");
-      for (let i = 0; i < tabs.length; i++) {
-        tabs[i].innerText = jf_convert.cn2tw(tabs[i].innerText);
-      }
-      let tabs2 = document.getElementsByClassName("el-tab-pane");
-      for (let i = 0; i < tabs.length; i++) {
-        tabs2[i].innerHTML = jf_convert.cn2tw(tabs2[i].innerHTML);
-      }
-      if (this.current_gsc) {
-        this.cn2twgsc(this.current_gsc);
-      }
-    });
-    ipcRenderer.on("clear_auto_search", (event, clear_auto_search) => {
-      this.clear_auto_search = clear_auto_search;
-    });
-    ipcRenderer.on("offline_search", (event, offline_search) => {
-      this.offline_search = offline_search;
-    });
+    this.search();
   },
   methods: {
+    operate_like_gsc(gsc_id, op){
+      db.run("UPDATE gsc set `like` = ? WHERE id = ?", op, gsc_id, (e)=>{
+        if(e){
+          this.show_notify(message="操作失败")
+        }else{
+          this.show_notify("success", "提醒", (op==1 ? '喜欢' : '取消') + '成功')
+          this.current_gsc.like = op
+          this.is_liked  = op
+        }
+      })
+    },
     showBaidu(baidu_wiki){
       let win = new BrowserWindow({
         width: 1200,
@@ -427,81 +390,7 @@ export default {
       this.search();
     },
     do_content(gsc_obj) {
-      if(!gsc_obj.annotation){
-          gsc_obj.annotation = ""
-      }
-      if(!gsc_obj.appreciation){
-          gsc_obj.appreciation = ""
-      }
-      if(!gsc_obj.content){
-          gsc_obj.content = ""
-      }
-      if(!gsc_obj.foreword){
-          gsc_obj.foreword = ""
-      }
-      if(!gsc_obj.intro){
-          gsc_obj.intro = ""
-      }
-      if(!gsc_obj.master_comment){
-          gsc_obj.master_comment = ""
-      }
-      if(!gsc_obj.translation){
-          gsc_obj.translation = ""
-      }
-      if(!gsc_obj.work_author){
-          gsc_obj.work_author = ""
-      }
-      if(!gsc_obj.work_dynasty){
-          gsc_obj.work_dynasty = ""
-      }
-      if(!gsc_obj.work_title){
-          gsc_obj.work_title = ""
-      }
-      // 句号
-      let period_index = gsc_obj.content.indexOf("。");
-      if (period_index == -1) {
-        // 感叹号
-        let exclamatory_mark_index = gsc_obj.content.indexOf("！");
-        if (exclamatory_mark_index == -1) {
-          // 问号
-          let question_mark_index = gsc_obj.content.indexOf("？");
-          gsc_obj.short_content = gsc_obj.content.slice(
-            0,
-            question_mark_index + 1
-          );
-        } else
-          [
-            (gsc_obj.short_content = gsc_obj.content.slice(
-              0,
-              exclamatory_mark_index + 1
-            ))
-          ];
-      } else {
-        gsc_obj.short_content = gsc_obj.content.slice(0, period_index + 1);
-      }
-      if (gsc_obj.layout == "indent") {
-        gsc_obj.content = gsc_obj.content.replace(/\t|\n|\r/g, "</br>&emsp;&emsp;");
-      } else {
-        gsc_obj.content = gsc_obj.content.replace(/\t|\n|\r/g, "</br>");
-      }
-      gsc_obj.translation = gsc_obj.translation.replace(
-        /\t|\n|\r/g,
-        "</br>&emsp;&emsp;"
-      );
-      gsc_obj.annotation = gsc_obj.annotation.replace(
-        /\t|\n|\r/g,
-        "</br>&emsp;&emsp;"
-      );
-      gsc_obj.appreciation = gsc_obj.appreciation.replace(
-        /\t|\n|\r/g,
-        "</br>&emsp;&emsp;"
-      );
-      gsc_obj.master_comment = gsc_obj.master_comment.replace(
-        /\t|\n|\r/g,
-        "</br>&emsp;&emsp;"
-      );
-      gsc_obj.intro = gsc_obj.intro.replace(/\n/g, "</br>&emsp;&emsp;");
-      gsc_obj.intro = gsc_obj.intro.replace(/\t/g, "</br>&emsp;&emsp;");
+      beautifyGsc(gsc_obj)
       // 简繁转换
       if (this.chinese === "tw") {
         this.cn2twgsc(gsc_obj);
@@ -554,10 +443,16 @@ export default {
       let that = this
       if (this.offline_search) {
         let sql = "select * from gsc where audio_id > 0 order by random() limit 30"
+        if(this.filter_like){
+            sql = "select * from gsc where `like` = 1 order by audio_id desc"
+        }
         if(this.input){
-          sql = ("select * from gsc where work_title like '%{0}%' or " + 
+          sql = ("select * from gsc where (work_title like '%{0}%' or " + 
           " work_author like '%{1}%' or content like '%{2}%' or " +
-          " foreword like '%{3}%'").format(this.input, this.input, this.input, this.input)
+          " foreword like '%{3}%' ) ").format(this.input, this.input, this.input, this.input)
+          if(this.filter_like){
+            sql += " and `like` = 1 "
+          }
         }
         db.parallelize(function(){
             db.all(sql, [], function(e,row) {
@@ -647,10 +542,32 @@ export default {
     }
   },
   created() {
+    let that = this;
     if (process.platform == "win32") {
       this.container_style = { height: "592px" };
     }
-    this.search();
+    ipcRenderer.on("query_current_gsc", (event, arg)=>{
+      db.get(
+      "SELECT * from gsc where `like` = 1 order by random() limit 1", (e, row)=>{
+        if(!e && row){
+          ipcRenderer.send("received_current_gsc", row.id, this.$parent.myfont["font-family"], 
+          row.content.length, this.do_content(row))
+        }else{
+          ipcRenderer.send("received_current_gsc", parseInt(Math.random() * 8000), this.$parent.myfont["font-family"], 0, null)
+        }
+      })
+    })
+    ipcRenderer.on("query_like_gsc", (event, arg)=>{
+      db.get(
+      "SELECT * from gsc order by random() limit 1", (e, row)=>{
+        if(!e && row){
+          ipcRenderer.send("received_like_gsc", row.id, this.$parent.myfont["font-family"], 
+          row.content.length, this.do_content(row))
+        }else{
+          ipcRenderer.send("received_like_gsc", parseInt(Math.random() * 8000), this.$parent.myfont["font-family"], 0, null)
+        }
+      })
+    })
     ipcRenderer.on("copy_and_search", (evnet, message, arg1) => {
       if (arg1 == 0 || arg1 == 2) {
         this.show_notify("success", "提醒", "已经复制到剪贴板");
@@ -659,18 +576,75 @@ export default {
         this.search_word(message);
       }
     });
-    // 设置简繁体
-    if (fs.existsSync(config_url)) {
-      try {
-        let result = fs.readFileSync(config_url);
-        result = JSON.parse(result);
-        if (result.__chinese__) {
-          this.chinese = result.__chinese__;
-        }
-      } catch (error) {
-        this.chinese = "cn";
+    ipcRenderer.on("capture_content", (event, message) => {
+      let color = "#FFFCEC";
+      if (this.$parent.dark_mode == "light-yellow") {
+        color = "whitesmoke";
+      } else if (this.$parent.dark_mode == "dark") {
+        color = "#93816d";
       }
-    }
+      html2canvas(document.getElementById("mycapture"), {
+        backgroundColor: color,
+        ignoreElements: (item)=>{
+          if(item.id ==="like-icon"){
+            return true
+          }
+          return false
+        }
+      }).then(canvas => {
+        //this.imgsrc = canvas.toDataURL('image/png')
+        let data_url = canvas.toDataURL("image/png");
+        let native_img = nativeImage.createFromDataURL(data_url);
+        clipboard.writeImage(native_img);
+        this.show_notify("success", "提醒", "图片已经复制到剪贴板");
+      });
+    });
+    // 切换简体
+    ipcRenderer.on("change-jianti", (event, arg) => {
+      this.chinese = "cn";
+      let divs = document.getElementsByClassName("grid-content");
+      for (let i = 0; i < divs.length; i++) {
+        divs[i].innerText = jf_convert.tw2cn(divs[i].innerText);
+      }
+      let tabs = document.getElementsByClassName("el-tabs__item");
+      for (let i = 0; i < tabs.length; i++) {
+        tabs[i].innerText = jf_convert.tw2cn(tabs[i].innerText);
+      }
+      let tabs2 = document.getElementsByClassName("el-tab-pane");
+      for (let i = 0; i < tabs2.length; i++) {
+        tabs2[i].innerHTML = jf_convert.tw2cn(tabs2[i].innerHTML);
+      }
+      if (this.current_gsc) {
+        this.tw2cngsc(this.current_gsc);
+      }
+    });
+    // 切换繁体
+    ipcRenderer.on("change-fanti", (event, arg) => {
+      this.chinese = "tw";
+      // 左边
+      let divs = document.getElementsByClassName("grid-content");
+      for (let i = 0; i < divs.length; i++) {
+        divs[i].innerText = jf_convert.cn2tw(divs[i].innerText);
+      }
+      // tabs
+      let tabs = document.getElementsByClassName("el-tabs__item");
+      for (let i = 0; i < tabs.length; i++) {
+        tabs[i].innerText = jf_convert.cn2tw(tabs[i].innerText);
+      }
+      let tabs2 = document.getElementsByClassName("el-tab-pane");
+      for (let i = 0; i < tabs.length; i++) {
+        tabs2[i].innerHTML = jf_convert.cn2tw(tabs2[i].innerHTML);
+      }
+      if (this.current_gsc) {
+        this.cn2twgsc(this.current_gsc);
+      }
+    });
+    ipcRenderer.on("clear_auto_search", (event, clear_auto_search) => {
+      this.clear_auto_search = clear_auto_search;
+    });
+    ipcRenderer.on("offline_search", (event, offline_search) => {
+      this.offline_search = offline_search;
+    });
   }
 };
 </script>

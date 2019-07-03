@@ -1,6 +1,6 @@
 <template>
   <div id="app" :style="myfont">
-    <div class="titlebar" v-if="platform =='darwin'"></div>
+    <div class="titlebar" v-if="platform =='darwin'" @dblclick="rolluptop"></div>
     <div v-loading="body_loading" 
   element-loading-fullscreen="true" element-loading-background="rgba(0, 0, 0, 0.9)"
   element-loading-text="全力加载中..." style="height:592px;" 
@@ -12,10 +12,7 @@
 import { setTimeout } from "timers";
 const fs = require("fs");
 const path = require("path");
-const { ipcRenderer, remote } = require("electron");
-const {app} = remote
-const userDataPath = app.getPath("userData")
-let config_url = path.join(userDataPath, "./USERCONFIG/config.json");
+const { ipcRenderer } = require("electron");
 import Gsc from "./components/Gsc";
 export default {
   name: "igsc",
@@ -29,39 +26,32 @@ export default {
     };
   },
   created() {
-    let that = this;
-    ipcRenderer.on("change-font", function(event, message) {
-      that.myfont = { "font-family": message };
+    ipcRenderer.on("change-font", (event, message) =>{
+      this.myfont = { "font-family": message };
     });
+    ipcRenderer.on("change-style", (event, dark_mode, is_user) => {
+        this.change_mode(dark_mode);
+    })
   },
   mounted() {
-    let that = this;
-    ipcRenderer.on("change-style", (event, dark_mode, is_user) => {
-      if (!fs.existsSync(config_url) || is_user){
-          this.change_mode(dark_mode);
-      }
-    });
     window.onload = () => {
-      if (fs.existsSync(config_url)) {
-        try {
-          let result = fs.readFileSync(config_url);
-          result = JSON.parse(result);
-          if(result.__dark_mode__){
-              that.change_mode(result.__dark_mode__ );
-          }
-          if(result.__font__){
-              that.myfont = { "font-family": result.__font__ };
-          }
-        } catch (error) {}
-      }
       if (this.body_loading) {
         setTimeout(()=>{
             this.body_loading = false
-        }, 2000)
+        }, 200)
       }
     };
   },
   methods: {
+    // 滚到顶部
+    rolluptop(){
+      let new_arr = []
+      for(let i=0;i<this.$children[0].gscs.length;i++ ){
+          new_arr[i] = this.$children[0].gscs[i]
+      }
+      this.$children[0].gscs = new_arr
+      this.$forceUpdate()
+    },
     change_mode(dark_mode){
       this.dark_mode = dark_mode
       document.body.className = dark_mode;
@@ -152,6 +142,10 @@ export default {
 background-color: #93816d !important;
 border-color: #93816d !important;
 opacity: 0.7;
+}
+
+.el-button--primary:hover{
+opacity: 0.85;
 }
 .el-loading-spinner .path{
  stroke: #93816d !important;

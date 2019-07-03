@@ -8,15 +8,17 @@ import {
   Menu,
   dialog,
   nativeImage,
-  ipcMain
+  ipcMain,
 } from 'electron'
 
 if (process.env.NODE_ENV !== 'development') {
   global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
 }
 
-import {writeFile} from "../renderer/util"
-
+import {
+  writeFile
+} from "../renderer/util"
+const log = require('electron-log');
 const path = require("path")
 const fs = require("fs")
 const xfs = require("fs-extra")
@@ -25,7 +27,7 @@ if (!fs.existsSync(path.join(userDataPath, "./USERCONFIG"))) {
   try {
     xfs.ensureDirSync(path.join(userDataPath, "./USERCONFIG"))
   } catch (e) {
-    console.log(e)
+    log.err(e)
   }
 }
 
@@ -33,21 +35,26 @@ let config_url = path.join(userDataPath, './USERCONFIG/config.json')
 const image = nativeImage.createFromPath(path.join(__static, './icon@3x.png'))
 
 let clear_auto_search = false
-let offline_search = false
+let offline_search = true
 let font_family = "songkai"
 let dark_mode = "light"
 let chinese = 'cn'
+let tray = null
+let showDetail = false
+let detailWindow = null
+let position = {}
 
 let mainWindow
 const winURL = process.env.NODE_ENV === 'development' ?
   `http://localhost:9080` :
   `file://${__dirname}/index.html`
 
-
+const detailURL = process.env.NODE_ENV === 'development' ?
+   `http://localhost:9090/detail.html` :
+  `file://${__dirname}/detail.html`
 function createWindow() {
   mainWindow = new BrowserWindow({
     height: 668,
-    useContentSize: true,
     width: 1100,
     maximizable: false,
     resizable: false,
@@ -56,66 +63,97 @@ function createWindow() {
     titleBarStyle: 'hidden'
   })
   mainWindow.loadURL(winURL)
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show()
-  })
+  mainWindow.once('ready-to-show', () => {})
   // web内容加载完之后进行
   mainWindow.webContents.on('did-finish-load', () => {
-    if (process.platform === "darwin") {
-      let dark_mode = "light"
+    // 显示主界面
+    mainWindow.show()
+    let userSetDarkMode = false
+    try {
+      if (fs.existsSync(config_url)) {
+        let result = fs.readFileSync(config_url)
+        result = JSON.parse(result)
+        // 加载清除后是否自动搜索
+        clear_auto_search = result.__clear_auto_search__ !== undefined ? result.__clear_auto_search__ : clear_auto_search
+        // 加载是否离线搜索
+        offline_search = result.__offline_search__ !== undefined ? result.__offline_search__ : offline_search
+        // 加载字体
+        font_family = result.__font__ !== undefined ? result.__font__ : font_family
+        // 加载显示模式
+        dark_mode = result.__dark_mode__ !== undefined ? result.__dark_mode__ : dark_mode
+        // 加载简体
+        chinese = result.__chinese__ !== undefined ? result.__chinese__ : chinese
+        if (result.__dark_mode__ !== undefined) {
+          userSetDarkMode = true
+        }
+      }
+    } catch (e) {
+      log.error(e)
+    }
+    if (process.platform === "darwin" && !userSetDarkMode) {
       if (systemPreferences.isDarkMode()) {
         dark_mode = "dark"
+      } else {
+        dark_mode = "light"
       }
-      mainWindow.webContents.send('change-style', dark_mode, false)
-    } else {
-      mainWindow.webContents.send('change-style', "light", false)
     }
+    // 发送显示模式
+    mainWindow.webContents.send('change-style', dark_mode, true);
+    // 发送字体显示
+    mainWindow.webContents.send('change-font', font_family);
     // 发送是否清除后自动搜索
     mainWindow.webContents.send('clear_auto_search', clear_auto_search);
     // 发送是否使用离线搜索
     mainWindow.webContents.send('offline_search', offline_search);
+    // 发送简繁体
+    if (chinese == 'tw') {
+      mainWindow.webContents.send('change-fanti', true);
+    }
+    // 设置菜单
+    set_menu()
   })
   // 托盘
-  const tray = new Tray(path.join(__static, './icon.png'))
-  tray.setToolTip('i古诗词')
-  mainWindow.on('closed', () => {
-    mainWindow = null
-    tray.destroy()
-  })
-  tray.on("click", () => {
-    if (mainWindow != null) {
-      mainWindow.show()
-    } else {
-      tray.destroy()
-    }
-  })
-  tray.on("drop", () => {
-    if (mainWindow != null) {
-      mainWindow.show()
-    } else {
-      tray.destroy()
-    }
-  });
   try {
-    if (fs.existsSync(config_url)) {
-      let result = fs.readFileSync(config_url)
-      result = JSON.parse(result)
-      // 加载清除后是否自动搜索
-      clear_auto_search = result.__clear_auto_search__ ? result.__clear_auto_search__ : clear_auto_search
-      // 加载是否离线搜索
-      offline_search = result.__offline_search__ ? result.__offline_search__ : offline_search
-      // 加载字体
-      font_family = result.__font__ ? result.__font__ : font_family
-      // 加载显示模式
-      dark_mode = result.__dark_mode__ ? result.__dark_mode__ : dark_mode
-      // 加载简体
-      chinese = result.__chinese__ ? result.__chinese__ : chinese
-    }
+    tray = new Tray(path.join(__static, './icon.png'))
+    tray.setToolTip('i古诗词')
+    mainWindow.on('closed', () => {
+      mainWindow = null
+      tray.destroy()
+    })
+    tray.on("click", () => {
+      if (mainWindow != null) {
+        // 点击弹出当前诗词
+        if(detailWindow && showDetail){
+          detailWindow.hide()
+          showDetail = false
+        }else{
+          mainWindow.webContents.send('query_current_gsc');
+        }
+      } else {
+        tray.destroy()
+      }
+    })
+    
+    // 喜欢的一首
+    tray.on("double-click", ()=>{
+      if(mainWindow){
+        mainWindow.webContents.send('query_like_gsc');
+      }
+    })
+    tray.on("drop", () => {
+      if (mainWindow != null) {
+        mainWindow.show()
+      } else {
+        tray.destroy()
+      }
+    });
   } catch (e) {
-    console.log(e)
+    log.error(e)
   }
-  // 设置菜单
-  set_menu()
+  // 设置数据库
+  createDB()
+  // 创建小窗口
+  createDetail()
 }
 
 // 右键按钮
@@ -126,6 +164,65 @@ ipcMain.on("copy_and_search", (event, arg, arg1) => {
 // 截图
 ipcMain.on("capture_content", (event, arg) => {
   mainWindow.webContents.send('capture_content', arg);
+})
+
+const getDetailPosition = () => {
+  const trayBounds = tray.getBounds()
+  const x = Math.round(trayBounds.x + (trayBounds.width / 2) - 150)
+  const y = Math.round(trayBounds.y + trayBounds.height + 4)
+  return {x: x, y: y}
+}
+
+const createDetail = ()=>{
+  detailWindow = new BrowserWindow({
+    width: 320,
+    height: 400,
+    minHeight: 200,
+    show: false,
+    frame: false,
+    modal: true,
+    fullscreenable: false,
+    //resizable: false,
+    webPreferences: {
+      backgroundThrottling: false,
+      scrollBounce: true,
+      defaultFontFamily: {
+        standard: "songkai"
+      }
+    }
+  })
+  detailWindow.loadURL(detailURL)
+}
+
+const sendShowgsc  = (gsc_id, font, len, gsc)=>{
+  detailWindow.webContents.send('togetgscdetail', gsc_id, font, gsc)
+    position = getDetailPosition()
+    detailWindow.setPosition(position.x, position.y, true)
+    detailWindow.setHasShadow(true)
+    if(len > 0){
+      let calcHeight = (len / 180) * 400 + 66
+      detailWindow.setSize(300, parseInt(Math.min(calcHeight, 400)), true)
+    }
+    detailWindow.show()
+    detailWindow.focus()
+    showDetail = true
+}
+// 获取当前的古诗词
+ipcMain.on("received_current_gsc", (event, gsc_id, font, len, gsc) => {
+  if(gsc_id == 0 && mainWindow!=null){
+    mainWindow.show()
+  }else if(detailWindow){
+    sendShowgsc(gsc_id, font, len, gsc)
+  }
+})
+
+// 随机获取喜欢的
+ipcMain.on("received_like_gsc", (event, gsc_id, font, len, gsc) => {
+  if(gsc_id == 0 && mainWindow!=null){
+    mainWindow.show()
+  }else if(detailWindow){
+    sendShowgsc(gsc_id, font, len, gsc)
+  }
 })
 
 app.on('ready', createWindow)
@@ -401,4 +498,18 @@ const set_menu = () => {
   ]
   let m = Menu.buildFromTemplate(menus)
   Menu.setApplicationMenu(m)
+}
+
+const createDB = () => {
+  let sqlite3 = require("sqlite3").verbose();
+  let dbFilePath = path.join(app.getAppPath(), '../db/gsc.db');
+  if (process.env.NODE_ENV !== "production") {
+    log.error(__dirname, __static)
+    dbFilePath = path.join(__static, "../gsc.db")
+  }
+  global.__db__ = new sqlite3.Database(dbFilePath, (e) => {
+    if (e) {
+      log.error(e)
+    }
+  })
 }
