@@ -1,10 +1,14 @@
 <template>
   <div id="app" :style="myfont">
     <div class="titlebar" v-if="platform =='darwin'" @dblclick="rolluptop"></div>
-    <div v-loading="body_loading" 
-  element-loading-fullscreen="true" element-loading-background="rgba(0, 0, 0, 0.9)"
-  element-loading-text="全力加载中..." style="height:592px;" 
-  v-if="body_loading"></div>
+    <div
+      v-loading="body_loading"
+      element-loading-fullscreen="true"
+      element-loading-background="rgba(0, 0, 0, 0.9)"
+      element-loading-text="全力加载中..."
+      style="height:592px;"
+      v-if="body_loading"
+    ></div>
     <router-view></router-view>
   </div>
 </template>
@@ -16,44 +20,60 @@ const { ipcRenderer } = require("electron");
 import Gsc from "./components/Gsc";
 export default {
   name: "igsc",
-  components: {Gsc},
+  components: { Gsc },
   data() {
     return {
       myfont: { "font-family": "songkai" },
-      dark_mode: 'light',
+      dark_mode: "light",
       platform: process.platform,
-      body_loading: true,
+      body_loading: true
     };
   },
   created() {
-    ipcRenderer.on("change-font", (event, message) =>{
+    ipcRenderer.on("change-font", (event, message) => {
       this.myfont = { "font-family": message };
     });
     ipcRenderer.on("change-style", (event, dark_mode, is_user) => {
-        this.change_mode(dark_mode);
-    })
+      this.change_mode(dark_mode);
+    });
   },
   mounted() {
     window.onload = () => {
       if (this.body_loading) {
-        setTimeout(()=>{
-            this.body_loading = false
-        }, 200)
+        setTimeout(() => {
+          this.body_loading = false;
+        }, 200);
       }
     };
   },
   methods: {
     // 滚到顶部
-    rolluptop(){
-      let new_arr = []
-      for(let i=0;i<this.$children[0].gscs.length;i++ ){
-          new_arr[i] = this.$children[0].gscs[i]
+    rolluptop: function(event = null, position = null) {
+      let left_side = document.getElementById("search-result");
+      let right_side = document.getElementById("detail-content");
+      if (event) {
+        let click_x = event.clientX;
+        if (click_x < 480) {
+          if(left_side)
+          left_side.scrollTop = 0;
+        } else if (click_x >= 481 && click_x <= 500) {
+          if (left_side && right_side) {
+            left_side.scrollTop = 0;
+            right_side.scrollTop = 0;
+          }
+        } else if (right_side) {
+          right_side.scrollTop = 0;
+        }
+      } else if (position) {
+        if (position === "left" && left_side) {
+          left_side.scrollTop = 0;
+        } else if (position === "right" && right_side) {
+          right_side.scrollTop = 0;
+        }
       }
-      this.$children[0].gscs = new_arr
-      this.$forceUpdate()
     },
-    change_mode(dark_mode){
-      this.dark_mode = dark_mode
+    change_mode(dark_mode) {
+      this.dark_mode = dark_mode;
       document.body.className = dark_mode;
     }
   }
@@ -98,14 +118,14 @@ export default {
   font-family: "songti";
 }
 
-.aplayer-info{
+.aplayer-info {
   font-family: "songti";
-  background-color:rgba(250, 250, 250, 0.1); 
-  color: #93816d
+  background-color: rgba(250, 250, 250, 0.1);
+  color: #93816d;
 }
 
-.aplayer-info:hover{
-  background-color:rgba(250, 250, 250, 0.8); 
+.aplayer-info:hover {
+  background-color: rgba(250, 250, 250, 0.8);
 }
 
 .el-input__inner {
@@ -117,7 +137,7 @@ export default {
 }
 .el-loading-mask {
   border-radius: 20px !important;
-  background-color:rgba(255,255,255,0) !important;
+  background-color: rgba(255, 255, 255, 0) !important;
 }
 
 .el-tabs__item.is-active {
@@ -138,17 +158,17 @@ export default {
   color: #93816d !important;
 }
 
-.el-button--primary{
-background-color: #93816d !important;
-border-color: #93816d !important;
-opacity: 0.7;
+.el-button--primary {
+  background-color: #93816d !important;
+  border-color: #93816d !important;
+  opacity: 0.7;
 }
 
-.el-button--primary:hover{
-opacity: 0.85;
+.el-button--primary:hover {
+  opacity: 0.85;
 }
-.el-loading-spinner .path{
- stroke: #93816d !important;
+.el-loading-spinner .path {
+  stroke: #93816d !important;
 }
 
 /*美化滚动条*/
@@ -175,6 +195,7 @@ opacity: 0.85;
 
 body {
   -webkit-app-region: no-drag;
+  margin: 0;
 }
 
 .titlebar {
@@ -187,28 +208,28 @@ body {
 
 .light-yellow {
   color: #625b57;
-  padding: 0px 12px 20px 12px;
+  padding: 0px 12px 12px 12px;
   background-repeat: repeat;
   background-size: cover;
   background-image: url("assets/light.jpeg");
 }
 
 .light {
-  padding: 0px 12px 20px 12px;
+  padding: 0px 12px 12px 12px;
   background-repeat: repeat;
   background-size: cover;
   background-image: url("assets/dark.png");
 }
 
 .dark {
-  color:#b8d3ca;
-  padding: 0px 12px 20px 12px;
+  color: #b8d3ca;
+  padding: 0px 12px 12px 12px;
   background-repeat: repeat;
   background-size: cover;
   background-image: url("assets/dark.png");
-  background-color:#0047ab;
+  background-color: #0047ab;
 }
-.el-tabs__nav-wrap::after{
+.el-tabs__nav-wrap::after {
   height: 1px !important;
   opacity: 0.8;
 }

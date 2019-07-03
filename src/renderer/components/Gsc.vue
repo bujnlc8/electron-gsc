@@ -2,7 +2,7 @@
   <div v-if="!$parent.body_loading">
     <el-container :style="container_style">
       <el-aside width="480px">
-        <el-row style="position:fixed;z-index:999;width:460px;">
+        <el-row style="position:fixed;width:460px;">
           <el-col :span="18">
             <el-input
               v-loading="loading"
@@ -25,7 +25,7 @@
             >搜索</el-button>
           </el-col>
         </el-row>
-        <el-row style="position:fixed;z-index:999; margin-top:3rem;font-family:songti;">
+        <el-row style="position:fixed; margin-top:3rem;font-family:songti;">
           <el-col>
             <el-switch 
             :disabled="!offline_search"
@@ -49,6 +49,7 @@
           <el-col :span="23" v-if="chinese=='cn'">暂无搜索结果，请尝试其他输入吧~</el-col>
           <el-col :span="23" v-if="chinese=='tw'">暫無搜索結果，請嘗試其他輸入吧~</el-col>
         </el-row>
+        <div id="search-result" style="height:506px;overflow:scroll;">
         <div v-for="gsc in gscs" v-bind:key="gsc.id" class="gsc-div" @click="open_gsc(gsc.id)">
           <el-row>
             <el-col :span="20">
@@ -76,9 +77,11 @@
           </el-row>
           <div class="seperate-div"></div>
         </div>
+        </div>
       </el-aside>
       <el-container>
         <!---右半部分开始-->
+        <div id="detail-content" style="height:630px;overflow:scroll;">
         <el-main v-if="current_gsc" style="margin-top:-10px;">
           <div id="mycapture" style="padding:1.2em 2em;">
             <el-row class="content">
@@ -172,6 +175,7 @@
             </el-tab-pane>
           </el-tabs>
         </el-main>
+        </div>
       </el-container>
     </el-container>
   </div>
@@ -180,7 +184,6 @@
 import { ApiUrl } from "../api.js";
 import {beautifyGsc} from "../util"
 import Aplayer from "vue-aplayer";
-import { throws } from "assert";
 import html2canvas from "html2canvas";
 const jf_convert = require("chinese_convert");
 const fs = require("fs");
@@ -524,6 +527,8 @@ export default {
             this.show_notify();
           } else {
             this.do_open_gsc(d.data.data)
+            // 右边滚动到顶部
+            this.$parent.rolluptop("right")
           }
         })
         .catch(e => {
@@ -536,6 +541,8 @@ export default {
             this.show_notify();
           }else{
             this.do_open_gsc(row)
+            // 右边滚动到顶部
+            this.$parent.rolluptop(null, "right")
           }
         })
       }
@@ -544,27 +551,31 @@ export default {
   created() {
     let that = this;
     if (process.platform == "win32") {
-      this.container_style = { height: "592px" };
+      this.container_style = { height: "580px" };
     }
-    ipcRenderer.on("query_current_gsc", (event, arg)=>{
-      db.get(
-      "SELECT * from gsc where `like` = 1 order by random() limit 1", (e, row)=>{
-        if(!e && row){
-          ipcRenderer.send("received_current_gsc", row.id, this.$parent.myfont["font-family"], 
-          row.content.length, this.do_content(row))
-        }else{
-          ipcRenderer.send("received_current_gsc", parseInt(Math.random() * 8000), this.$parent.myfont["font-family"], 0, null)
-        }
-      })
+    ipcRenderer.on('go_detail', (event, gsc_id)=>{
+      this.open_gsc(gsc_id)
+      ipcRenderer.send('open_main_window')
     })
     ipcRenderer.on("query_like_gsc", (event, arg)=>{
       db.get(
-      "SELECT * from gsc order by random() limit 1", (e, row)=>{
+      "SELECT * from gsc where `like` = 1 order by random() limit 1", (e, row)=>{
         if(!e && row){
-          ipcRenderer.send("received_like_gsc", row.id, this.$parent.myfont["font-family"], 
+          ipcRenderer.send("received_gsc", row.id, this.$parent.myfont["font-family"], 
           row.content.length, this.do_content(row))
         }else{
-          ipcRenderer.send("received_like_gsc", parseInt(Math.random() * 8000), this.$parent.myfont["font-family"], 0, null)
+          ipcRenderer.send("received_gsc", parseInt(Math.random() * 8000), this.$parent.myfont["font-family"], 0, null)
+        }
+      })
+    })
+    ipcRenderer.on("query_random_gsc", (event, arg)=>{
+      db.get(
+      "SELECT * from gsc order by random() limit 1", (e, row)=>{
+        if(!e && row){
+          ipcRenderer.send("received_gsc", row.id, this.$parent.myfont["font-family"], 
+          row.content.length, this.do_content(row))
+        }else{
+          ipcRenderer.send("received_gsc", parseInt(Math.random() * 8000), this.$parent.myfont["font-family"], 0, null)
         }
       })
     })
@@ -653,7 +664,7 @@ export default {
   text-align: right;
 }
 .gsc-div {
-  margin-top: 20px;
+  margin-top: 0.8em;
 }
 .grid-content {
   margin-top: 6px;

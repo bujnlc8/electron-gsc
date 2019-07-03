@@ -40,9 +40,9 @@ let font_family = "songkai"
 let dark_mode = "light"
 let chinese = 'cn'
 let tray = null
-let showDetail = false
 let detailWindow = null
 let position = {}
+let one_click_mode = "like"
 
 let mainWindow
 const winURL = process.env.NODE_ENV === 'development' ?
@@ -83,6 +83,8 @@ function createWindow() {
         dark_mode = result.__dark_mode__ !== undefined ? result.__dark_mode__ : dark_mode
         // 加载简体
         chinese = result.__chinese__ !== undefined ? result.__chinese__ : chinese
+        // 加载单机切换模式
+        one_click_mode = result.__one_click_mode__ !== undefined ? result.__one_click_mode__ : one_click_mode
         if (result.__dark_mode__ !== undefined) {
           userSetDarkMode = true
         }
@@ -122,22 +124,24 @@ function createWindow() {
     })
     tray.on("click", () => {
       if (mainWindow != null) {
-        // 点击弹出当前诗词
-        if(detailWindow && showDetail){
-          detailWindow.hide()
-          showDetail = false
+        // 根据模式切换诗词
+        if(one_click_mode == "like"){
+          mainWindow.webContents.send('query_like_gsc');
         }else{
-          mainWindow.webContents.send('query_current_gsc');
+          mainWindow.webContents.send('query_random_gsc');
         }
       } else {
         tray.destroy()
       }
     })
     
-    // 喜欢的一首
+    // 关闭
     tray.on("double-click", ()=>{
-      if(mainWindow){
-        mainWindow.webContents.send('query_like_gsc');
+      // if(mainWindow){
+      //   mainWindow.webContents.send('query_random_gsc');
+      // }
+      if(detailWindow){
+        detailWindow.hide()
       }
     })
     tray.on("drop", () => {
@@ -175,23 +179,22 @@ const getDetailPosition = () => {
 
 const createDetail = ()=>{
   detailWindow = new BrowserWindow({
-    width: 320,
+    width: 300,
     height: 400,
-    minHeight: 200,
     show: false,
     frame: false,
-    modal: true,
     fullscreenable: false,
-    //resizable: false,
+    resizable: false,
+    transparent: true,
     webPreferences: {
       backgroundThrottling: false,
-      scrollBounce: true,
-      defaultFontFamily: {
-        standard: "songkai"
-      }
+      // scrollBounce: true,
     }
   })
   detailWindow.loadURL(detailURL)
+  // detailWindow.on("blur", ()=>{
+  //   detailWindow.hide()
+  // })
 }
 
 const sendShowgsc  = (gsc_id, font, len, gsc)=>{
@@ -199,16 +202,15 @@ const sendShowgsc  = (gsc_id, font, len, gsc)=>{
     position = getDetailPosition()
     detailWindow.setPosition(position.x, position.y, true)
     detailWindow.setHasShadow(true)
-    if(len > 0){
-      let calcHeight = (len / 180) * 400 + 66
-      detailWindow.setSize(300, parseInt(Math.min(calcHeight, 400)), true)
-    }
+    // if(len > 0){
+    //   let calcHeight = (len / 220) * 400 + 60
+    //   detailWindow.setSize(300, parseInt(Math.min(calcHeight, 400)), true)
+    // }
     detailWindow.show()
     detailWindow.focus()
-    showDetail = true
 }
-// 获取当前的古诗词
-ipcMain.on("received_current_gsc", (event, gsc_id, font, len, gsc) => {
+// 获取到古诗词
+ipcMain.on("received_gsc", (event, gsc_id, font, len, gsc) => {
   if(gsc_id == 0 && mainWindow!=null){
     mainWindow.show()
   }else if(detailWindow){
@@ -216,12 +218,14 @@ ipcMain.on("received_current_gsc", (event, gsc_id, font, len, gsc) => {
   }
 })
 
-// 随机获取喜欢的
-ipcMain.on("received_like_gsc", (event, gsc_id, font, len, gsc) => {
-  if(gsc_id == 0 && mainWindow!=null){
+ipcMain.on("go_detail", (event, gsc_id)=>{
+  log.error(gsc_id)
+  mainWindow.send("go_detail", gsc_id)
+})
+
+ipcMain.on("open_main_window", (e, arg)=>{
+  if(mainWindow){
     mainWindow.show()
-  }else if(detailWindow){
-    sendShowgsc(gsc_id, font, len, gsc)
   }
 })
 
@@ -467,6 +471,35 @@ const set_menu = () => {
                 show_dialog("youyuanti")
               }
             }
+          ]
+        },
+        {
+          label: '单击切换模式',
+          submenu:[
+            {
+              label: "喜欢",
+              type: 'radio',
+              checked: one_click_mode == "like",
+              click: ()=>{
+                const content = {
+                  "__one_click_mode__": "like"
+                }
+                one_click_mode = "like"
+                writeFile(config_url, content);
+              }
+            },
+            {
+              label: "随机",
+              type: 'radio',
+              checked: one_click_mode == "random",
+              click: ()=>{
+                const content = {
+                  "__one_click_mode__": "random"
+                }
+                one_click_mode = "random"
+                writeFile(config_url, content);
+              }
+            },
           ]
         },
         {
