@@ -553,6 +553,9 @@ export default {
   },
   created() {
     let that = this;
+    ipcRenderer.on('auto_play_lyric', (event, auto_play_lyric)=>{
+      ipcRenderer.send('auto_play_lyric', auto_play_lyric)
+    })
     if (process.platform == "win32") {
       this.container_style = { height: "580px" };
     }

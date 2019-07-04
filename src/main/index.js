@@ -30,6 +30,7 @@ if (!fs.existsSync(path.join(userDataPath, "./USERCONFIG"))) {
     log.err(e)
   }
 }
+const c = require('ansi-colors')
 
 let config_url = path.join(userDataPath, './USERCONFIG/config.json')
 const image = nativeImage.createFromPath(path.join(__static, './icon@3x.png'))
@@ -45,6 +46,8 @@ let position = {}
 let one_click_mode = "random"
 let current_gsc_id = 0
 let interval_id = 0
+let auto_play_lyric = true
+let got_gsc = null
 
 let mainWindow
 const winURL = process.env.NODE_ENV === 'development' ?
@@ -88,6 +91,8 @@ function createWindow() {
         chinese = result.__chinese__ !== undefined ? result.__chinese__ : chinese
         // 加载单机切换模式
         one_click_mode = result.__one_click_mode__ !== undefined ? result.__one_click_mode__ : one_click_mode
+        // 通知栏自动播放内容
+        auto_play_lyric = result.__auto_play_lyric__ !== undefined ? result.__auto_play_lyric__ : auto_play_lyric
         if (result.__dark_mode__ !== undefined) {
           userSetDarkMode = true
         }
@@ -114,6 +119,8 @@ function createWindow() {
     if (chinese == 'tw') {
       mainWindow.webContents.send('change-fanti', true);
     }
+    // 发送自动播放内容
+    mainWindow.webContents.send("auto_play_lyric", auto_play_lyric)
     // 设置菜单
     set_menu()
   })
@@ -179,6 +186,7 @@ ipcMain.on("capture_content", (event, arg) => {
 ipcMain.on("currentht_gsc_a", (event, gsc) => {
   if (tray) {
     current_gsc_id = gsc.id
+    got_gsc = gsc
     play_gsc(gsc)
   }
 })
@@ -189,6 +197,7 @@ ipcMain.on("received_gsc", (event, gsc_id, font, len, gsc) => {
     mainWindow.show()
   } else if (detailWindow) {
     send_show_gsc(gsc_id, font, len, gsc)
+    got_gsc = gsc
   }
 })
 
@@ -210,6 +219,26 @@ ipcMain.on("close_detail_window", (e, arg)=>{
     detailWindow.hide()
   }
 })
+
+// 监听菜单自动播放内容
+ipcMain.on("auto_play_lyric", (e, arg)=>{
+  if(arg && interval_id == 0){
+    play_gsc(got_gsc)
+  }
+  if(!arg){
+    clear_interval(interval_id)
+  }
+})
+
+const clear_interval = (id)=>{
+  if(id!=0){
+    clearInterval(id)
+  }
+  interval_id = 0
+  if(tray){
+    tray.setTitle("")
+  }
+}
 
 const getDetailPosition = () => {
   const trayBounds = tray.getBounds()
@@ -239,9 +268,16 @@ const createDetail = () => {
 }
 
 const play_gsc = (gsc) => {
+  if(!auto_play_lyric){
+    if(interval_id!=0){
+      clear_interval(interval_id)
+    }
+    return false
+  }
   try {
-    if (tray) {
-      let content_splits = (gsc.work_title + "|" + '【{0}】'.format(gsc.work_dynasty) + gsc.work_author + "|" + gsc.content).replace(/，|。|？|！|；/g, "|").replace(/\t|\n|\s|<\/br>|&emsp;|”|“/g, "").split("|")
+    if (tray && gsc) {
+      tray.setToolTip(gsc.work_title + "·" + gsc.work_author)
+      let content_splits = (gsc.work_title + "|" + '【{0}】'.format(gsc.work_dynasty) + gsc.work_author + "|" + gsc.content).replace(/，|。|？|！|；|<\/br>/g, "|").replace(/\t|\n|\s|&emsp;|”|“/g, "").split("|")
       let start = 0
       let new_splits = []
       for (let i = 0; i < content_splits.length; i++) {
@@ -252,19 +288,28 @@ const play_gsc = (gsc) => {
       let end = new_splits.length
       if (interval_id != 0) {
         try{
-          clearInterval(interval_id)
+          clear_interval(interval_id)
         }catch(e){
           log.error(e)
         }
       }
       interval_id = setInterval(function(){
-        if (start == end)
+        if (start >= end)
           start = 0
         if (new_splits[start] != "") {
-          tray.setTitle(new_splits[start])
+          let first = new_splits[start]
+          let second = ""
+          if(start + 1 < end && new_splits[start+1].length > 0){
+            second = new_splits[start+1] + "  "
+          }
+          if(second == ""){
+            tray.setTitle(c.bgWhite.blue("  " + first + " "))
+          }else{
+            tray.setTitle(c.bgWhite.blue("  " + first )+ c.bgWhite.black.bold(" ~ ") + c.bgWhite.blue(second))
+          }
         }
-        start += 1
-      }, 2000)
+        start += 2
+      }, 2500)
     }
   } catch (e) {
     log.error(e)
@@ -292,7 +337,7 @@ app.on('ready', createWindow)
 app.on("quit", ()=>{
   if (interval_id != 0) {
     log.error("clear interval", interval_id)
-    clearInterval(interval_id)
+     clear_interval(interval_id)
   }
 })
 
@@ -302,7 +347,7 @@ app.on('window-all-closed', () => {
   }
   if (interval_id != 0) {
     log.error("clear interval", interval_id)
-    clearInterval(interval_id)
+    clear_interval(interval_id)
   }
 })
 
@@ -583,6 +628,22 @@ const set_menu = () => {
           }
         },
         {
+          label: '通知栏播放',
+          type: "checkbox",
+          checked: auto_play_lyric,
+          click: (menu_item) => {
+            const content = {
+              "__auto_play_lyric__": menu_item.checked
+            }
+            writeFile(config_url, content);
+            auto_play_lyric = menu_item.checked
+            if(!auto_play_lyric && interval_id !=0){
+              clear_interval(interval_id)
+            }
+            mainWindow.webContents.send('auto_play_lyric', menu_item.checked);
+          }
+        },
+        {
           label: '清除时自动搜索',
           type: "checkbox",
           checked: clear_auto_search,
@@ -592,6 +653,7 @@ const set_menu = () => {
             };
             mainWindow.webContents.send('clear_auto_search', menu_item.checked);
             writeFile(config_url, content);
+            clear_auto_search = menu_item.checked
           }
         },
       ]
