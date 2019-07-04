@@ -1,8 +1,6 @@
 <template>
-  <div :style="__font__">
-    <div class="header-arrow"></div>
-    <div class="content">
-      <div style="font-size:16px;">
+  <div :style="myfont">
+      <div style="font-size:16px;text-align: center;">
         <label @dblclick="go_detail(gsc_id)">{{gsc.work_title}}</label>
         <span style="padding-left:1em;">
           <img
@@ -19,13 +17,12 @@
           />
         </span>
       </div>
-      <div v-if="gsc.work_dynasty" style="font-size:13px;">{{gsc.work_dynasty}}·{{gsc.work_author}}</div>
+      <div v-if="gsc.work_dynasty" style="font-size:13px;text-align: center;">{{gsc.work_dynasty}}·{{gsc.work_author}}</div>
       <div
         v-if="gsc.forword !==''"
         style="font-size:0.8em;font-style:italic;text-indent: 2em;"
       >{{gsc.forward}}</div>
-      <div v-html="gsc.content" :class="gsc.layout"></div>
-    </div>
+      <div v-html="gsc.content" :class="gsc.layout" @dblclick="close_window()"></div>
   </div>
 </template>
 <script>
@@ -38,7 +35,7 @@ export default {
   data() {
     return {
       gsc_id: 1,
-      __font__: { "font-family": "songkai" },
+      myfont: { "font-family": "songkai" },
       gsc: {},
       is_liked: 0
     };
@@ -61,12 +58,15 @@ export default {
     },
     go_detail(gsc_id) {
       ipcRenderer.send("go_detail", gsc_id);
+    },
+    close_window(){
+      ipcRenderer.send("close_detail_window", null)
     }
   },
   created() {
-    ipcRenderer.on("togetgscdetail", (event, gsc_id, font, gsc) => {
+    ipcRenderer.on("to_get_gsc_detail", (event, gsc_id, font, gsc) => {
       if (font) {
-        this.__font__ = { "font-family": font };
+        this.myfont = { "font-family": font };
       }
       this.gsc_id = gsc_id;
       if (!gsc) {
@@ -86,19 +86,15 @@ export default {
 body {
   padding: 0;
   margin: 0;
-}
-.content {
-  height: 360px;
-  margin-top: 5px;
+  opacity: 0.9;
   font-size: 16px;
-  text-align: center;
-  background-color: #e4ebf2;
   line-height: 1.75em;
-  color: #23345c;
-  padding: 1em 0.5em 0.5em 1em;
   border-radius: 6px;
-  overflow: scroll;
+  padding: 1em 0.5em 0.5em 1em;
+  background-color: #e4ebf2;
+  color: #23345c;
 }
+
 ::-webkit-scrollbar {
   width: 0px;
   height: 0px;
@@ -113,6 +109,11 @@ body {
 @font-face {
   font-family: "kaiti";
   src: url("assets/kaiti.ttf");
+}
+
+@font-face {
+  font-family: "songkai";
+  src: url("assets/songkai.ttf");
 }
 
 @font-face {
@@ -135,16 +136,5 @@ body {
 @font-face {
   font-family: "youyuanti";
   src: url("assets/youyuanti.otf");
-}
-.header-arrow {
-  z-index: -1;
-  position: fixed;
-  top: 2px;
-  left: 50%;
-  margin-left: -6px;
-  height: 10px;
-  width: 10px;
-  transform: rotate(45deg);
-  background-color: #e4ebf2;
 }
 </style>

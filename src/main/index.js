@@ -42,7 +42,9 @@ let chinese = 'cn'
 let tray = null
 let detailWindow = null
 let position = {}
-let one_click_mode = "like"
+let one_click_mode = "random"
+let current_gsc_id = 0
+let interval_id = 0
 
 let mainWindow
 const winURL = process.env.NODE_ENV === 'development' ?
@@ -50,8 +52,9 @@ const winURL = process.env.NODE_ENV === 'development' ?
   `file://${__dirname}/index.html`
 
 const detailURL = process.env.NODE_ENV === 'development' ?
-   `http://localhost:9090/detail.html` :
+  `http://localhost:9090/detail.html` :
   `file://${__dirname}/detail.html`
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     height: 668,
@@ -63,7 +66,7 @@ function createWindow() {
     titleBarStyle: 'hidden'
   })
   mainWindow.loadURL(winURL)
-  mainWindow.once('ready-to-show', () => {})
+  // mainWindow.once('ready-to-show', () => {})
   // web内容加载完之后进行
   mainWindow.webContents.on('did-finish-load', () => {
     // 显示主界面
@@ -121,28 +124,30 @@ function createWindow() {
     mainWindow.on('closed', () => {
       mainWindow = null
       tray.destroy()
+      if (detailWindow) {
+        detailWindow.destroy()
+      }
     })
-    tray.on("click", () => {
+    tray.on("right-click", () => {
       if (mainWindow != null) {
         // 根据模式切换诗词
-        if(one_click_mode == "like"){
+        if (one_click_mode == "like") {
           mainWindow.webContents.send('query_like_gsc');
-        }else{
+        } else {
           mainWindow.webContents.send('query_random_gsc');
         }
       } else {
         tray.destroy()
+        tray = null
       }
     })
-    
-    // 关闭
-    tray.on("double-click", ()=>{
-      // if(mainWindow){
-      //   mainWindow.webContents.send('query_random_gsc');
-      // }
-      if(detailWindow){
-        detailWindow.hide()
-      }
+
+    // 屏蔽双击事件
+    tray.on("double-click", () => false)
+
+    tray.on("click", () => {
+      if (current_gsc_id != 0)
+        mainWindow.send("go_detail", current_gsc_id)
     })
     tray.on("drop", () => {
       if (mainWindow != null) {
@@ -170,70 +175,134 @@ ipcMain.on("capture_content", (event, arg) => {
   mainWindow.webContents.send('capture_content', arg);
 })
 
+// 托盘当前古诗词
+ipcMain.on("currentht_gsc_a", (event, gsc) => {
+  if (tray) {
+    current_gsc_id = gsc.id
+    play_gsc(gsc)
+  }
+})
+
+// 获取到古诗词
+ipcMain.on("received_gsc", (event, gsc_id, font, len, gsc) => {
+  if (gsc_id == 0 && mainWindow != null) {
+    mainWindow.show()
+  } else if (detailWindow) {
+    send_show_gsc(gsc_id, font, len, gsc)
+  }
+})
+
+// 发送显示小窗口消息
+ipcMain.on("go_detail", (event, gsc_id) => {
+  mainWindow.send("go_detail", gsc_id)
+})
+
+// 打开主界面
+ipcMain.on("open_main_window", (e, arg) => {
+  if (mainWindow) {
+    mainWindow.show()
+  }
+})
+
+// 关闭小窗口
+ipcMain.on("close_detail_window", (e, arg)=>{
+  if(detailWindow){
+    detailWindow.hide()
+  }
+})
+
 const getDetailPosition = () => {
   const trayBounds = tray.getBounds()
   const x = Math.round(trayBounds.x + (trayBounds.width / 2) - 150)
   const y = Math.round(trayBounds.y + trayBounds.height + 4)
-  return {x: x, y: y}
+  return {
+    x: x,
+    y: y
+  }
 }
 
-const createDetail = ()=>{
+const createDetail = () => {
   detailWindow = new BrowserWindow({
-    width: 300,
-    height: 400,
+    width: 320,
+    height: 420,
     show: false,
     frame: false,
     fullscreenable: false,
     resizable: false,
-    transparent: true,
+    //transparent: true,
     webPreferences: {
       backgroundThrottling: false,
-      // scrollBounce: true,
+      scrollBounce: false,
     }
   })
   detailWindow.loadURL(detailURL)
-  // detailWindow.on("blur", ()=>{
-  //   detailWindow.hide()
-  // })
 }
 
-const sendShowgsc  = (gsc_id, font, len, gsc)=>{
-  detailWindow.webContents.send('togetgscdetail', gsc_id, font, gsc)
-    position = getDetailPosition()
-    detailWindow.setPosition(position.x, position.y, true)
-    detailWindow.setHasShadow(true)
-    // if(len > 0){
-    //   let calcHeight = (len / 220) * 400 + 60
-    //   detailWindow.setSize(300, parseInt(Math.min(calcHeight, 400)), true)
-    // }
-    detailWindow.show()
-    detailWindow.focus()
+const play_gsc = (gsc) => {
+  try {
+    if (tray) {
+      let content_splits = (gsc.work_title + "|" + '【{0}】'.format(gsc.work_dynasty) + gsc.work_author + "|" + gsc.content).replace(/，|。|？|！|；/g, "|").replace(/\t|\n|\s|<\/br>|&emsp;|”|“/g, "").split("|")
+      let start = 0
+      let new_splits = []
+      for (let i = 0; i < content_splits.length; i++) {
+        if (content_splits[i] != "") {
+          new_splits.push(content_splits[i])
+        }
+      }
+      let end = new_splits.length
+      if (interval_id != 0) {
+        try{
+          clearInterval(interval_id)
+        }catch(e){
+          log.error(e)
+        }
+      }
+      interval_id = setInterval(function(){
+        if (start == end)
+          start = 0
+        if (new_splits[start] != "") {
+          tray.setTitle(new_splits[start])
+        }
+        start += 1
+      }, 2000)
+    }
+  } catch (e) {
+    log.error(e)
+  }
 }
-// 获取到古诗词
-ipcMain.on("received_gsc", (event, gsc_id, font, len, gsc) => {
-  if(gsc_id == 0 && mainWindow!=null){
-    mainWindow.show()
-  }else if(detailWindow){
-    sendShowgsc(gsc_id, font, len, gsc)
-  }
-})
 
-ipcMain.on("go_detail", (event, gsc_id)=>{
-  log.error(gsc_id)
-  mainWindow.send("go_detail", gsc_id)
-})
-
-ipcMain.on("open_main_window", (e, arg)=>{
-  if(mainWindow){
-    mainWindow.show()
+const send_show_gsc = (gsc_id, font, len, gsc) => {
+  detailWindow.webContents.send('to_get_gsc_detail', gsc_id, font, gsc)
+  position = getDetailPosition()
+  detailWindow.setPosition(position.x, position.y, true)
+  if(len > 0){
+    let calc_height = (len / 160) * 420 + 80
+    detailWindow.setSize(320, Math.min(parseInt(calc_height), 420), true)
   }
-})
+  detailWindow.show()
+  detailWindow.focus()
+  current_gsc_id = gsc_id
+  if (tray) {
+    play_gsc(gsc)
+  }
+}
 
 app.on('ready', createWindow)
+
+app.on("quit", ()=>{
+  if (interval_id != 0) {
+    log.error("clear interval", interval_id)
+    clearInterval(interval_id)
+  }
+})
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
+  }
+  if (interval_id != 0) {
+    log.error("clear interval", interval_id)
+    clearInterval(interval_id)
   }
 })
 
@@ -474,13 +543,12 @@ const set_menu = () => {
           ]
         },
         {
-          label: '单击切换模式',
-          submenu:[
-            {
+          label: '右键切换模式',
+          submenu: [{
               label: "喜欢",
               type: 'radio',
               checked: one_click_mode == "like",
-              click: ()=>{
+              click: () => {
                 const content = {
                   "__one_click_mode__": "like"
                 }
@@ -492,7 +560,7 @@ const set_menu = () => {
               label: "随机",
               type: 'radio',
               checked: one_click_mode == "random",
-              click: ()=>{
+              click: () => {
                 const content = {
                   "__one_click_mode__": "random"
                 }

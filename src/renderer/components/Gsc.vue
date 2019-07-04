@@ -49,7 +49,7 @@
           <el-col :span="23" v-if="chinese=='cn'">暂无搜索结果，请尝试其他输入吧~</el-col>
           <el-col :span="23" v-if="chinese=='tw'">暫無搜索結果，請嘗試其他輸入吧~</el-col>
         </el-row>
-        <div id="search-result" style="height:506px;overflow:scroll;">
+        <div id="search-result" style="height:500px;overflow:scroll;">
         <div v-for="gsc in gscs" v-bind:key="gsc.id" class="gsc-div" @click="open_gsc(gsc.id)">
           <el-row>
             <el-col :span="20">
@@ -502,18 +502,21 @@ export default {
           pic:
             "https://qcloudtest-1256650966.cos.ap-guangzhou.myqcloud.com/avatar.jpeg"
         };
-        if (this.current_gsc.intro) {
+        if (this.current_gsc.intro.length > 0) {
           this.activeName = "intro";
-        } else if (this.current_gsc.annotation) {
+        } else if (this.current_gsc.annotation.length > 0) {
           this.activeName = "annotation";
-        } else if (this.current_gsc.translation) {
+        } else if (this.current_gsc.translation.length > 0) {
           this.activeName = "translation";
-        } else if (this.current_gsc.appreciation) {
+        } else if (this.current_gsc.appreciation.length > 0) {
           this.activeName = "appreciation";
-        } else if (this.current_gsc.master_comment) {
+        } else if (this.current_gsc.master_comment.length > 0) {
           this.activeName = "master_comment";
         } else {
           this.activeName = "";
+      }
+      if(ipcRenderer && this.current_gsc !== undefined){
+          ipcRenderer.send("currentht_gsc_a", this.current_gsc)
       }
     },
     open_gsc(id_) {
