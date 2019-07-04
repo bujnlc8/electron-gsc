@@ -54,7 +54,7 @@
           <el-row>
             <el-col :span="20">
               <div class="grid-content">{{gsc.work_title}} <i class="el-icon-link" 
-              v-if="current_gsc.baidu_wiki" @click="showBaidu(current_gsc.baidu_wiki)" style="margin-left:1em;"></i></div>
+              v-if="gsc.baidu_wiki" @click="showBaidu(gsc.baidu_wiki)" style="margin-left:1em;"></i></div>
             </el-col>
             <el-col :span="3">
               <div class="grid-content content-right">

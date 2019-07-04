@@ -130,6 +130,7 @@ function createWindow() {
     tray.setToolTip('i古诗词')
     mainWindow.on('closed', () => {
       mainWindow = null
+      clear_interval(interval_id)
       tray.destroy()
       if (detailWindow) {
         detailWindow.destroy()
@@ -154,7 +155,8 @@ function createWindow() {
 
     tray.on("click", () => {
       if (current_gsc_id != 0)
-        mainWindow.send("go_detail", current_gsc_id)
+        // mainWindow.send("go_detail", current_gsc_id)
+        send_show_gsc(current_gsc_id, null, 0, null)
     })
     tray.on("drop", () => {
       if (mainWindow != null) {
@@ -201,7 +203,7 @@ ipcMain.on("received_gsc", (event, gsc_id, font, len, gsc) => {
   }
 })
 
-// 发送显示小窗口消息
+// 发送显示主界面详情消息
 ipcMain.on("go_detail", (event, gsc_id) => {
   mainWindow.send("go_detail", gsc_id)
 })
@@ -316,6 +318,7 @@ const play_gsc = (gsc) => {
   }
 }
 
+// 显示小窗
 const send_show_gsc = (gsc_id, font, len, gsc) => {
   detailWindow.webContents.send('to_get_gsc_detail', gsc_id, font, gsc)
   position = getDetailPosition()
