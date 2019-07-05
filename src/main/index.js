@@ -30,7 +30,6 @@ if (!fs.existsSync(path.join(userDataPath, "./USERCONFIG"))) {
     log.err(e)
   }
 }
-const c = require('ansi-colors')
 
 let config_url = path.join(userDataPath, './USERCONFIG/config.json')
 const image = nativeImage.createFromPath(path.join(__static, './icon@3x.png'))
@@ -154,9 +153,14 @@ function createWindow() {
     tray.on("double-click", () => false)
 
     tray.on("click", () => {
-      if (current_gsc_id != 0)
+      if (current_gsc_id != 0) {
         // mainWindow.send("go_detail", current_gsc_id)
-        send_show_gsc(current_gsc_id, null, 0, null)
+        if (detailWindow && detailWindow.isVisible()) {
+          detailWindow.hide()
+        } else {
+          send_show_gsc(current_gsc_id, 0, null)
+        }
+      }
     })
     tray.on("drop", () => {
       if (mainWindow != null) {
@@ -168,6 +172,20 @@ function createWindow() {
   } catch (e) {
     log.error(e)
   }
+
+  tray.on("mouse-enter", () => {
+    if (current_gsc_id != 0 && auto_play_lyric) {
+      if (detailWindow && !detailWindow.isVisible()) {
+        send_show_gsc(current_gsc_id, 0, null)
+      }
+    }
+  })
+  tray.on("mouse-leave", () => {
+    if (current_gsc_id != 0 && auto_play_lyric)
+      if (detailWindow && detailWindow.isVisible()) {
+        detailWindow.hide()
+      }
+  })
   // 设置数据库
   createDB()
   // 创建小窗口
@@ -194,11 +212,11 @@ ipcMain.on("currentht_gsc_a", (event, gsc) => {
 })
 
 // 获取到古诗词
-ipcMain.on("received_gsc", (event, gsc_id, font, len, gsc) => {
+ipcMain.on("received_gsc", (event, gsc_id, len, gsc) => {
   if (gsc_id == 0 && mainWindow != null) {
     mainWindow.show()
   } else if (detailWindow) {
-    send_show_gsc(gsc_id, font, len, gsc)
+    send_show_gsc(gsc_id, len, gsc)
     got_gsc = gsc
   }
 })
@@ -216,28 +234,28 @@ ipcMain.on("open_main_window", (e, arg) => {
 })
 
 // 关闭小窗口
-ipcMain.on("close_detail_window", (e, arg)=>{
-  if(detailWindow){
+ipcMain.on("close_detail_window", (e, arg) => {
+  if (detailWindow) {
     detailWindow.hide()
   }
 })
 
 // 监听菜单自动播放内容
-ipcMain.on("auto_play_lyric", (e, arg)=>{
-  if(arg && interval_id == 0){
+ipcMain.on("auto_play_lyric", (e, arg) => {
+  if (arg && interval_id == 0) {
     play_gsc(got_gsc)
   }
-  if(!arg){
+  if (!arg) {
     clear_interval(interval_id)
   }
 })
 
-const clear_interval = (id)=>{
-  if(id!=0){
+const clear_interval = (id) => {
+  if (id != 0) {
     clearInterval(id)
   }
   interval_id = 0
-  if(tray){
+  if (tray) {
     tray.setTitle("")
   }
 }
@@ -260,18 +278,17 @@ const createDetail = () => {
     frame: false,
     fullscreenable: false,
     resizable: false,
-    //transparent: true,
     webPreferences: {
       backgroundThrottling: false,
-      scrollBounce: false,
+      scrollBounce: true,
     }
   })
   detailWindow.loadURL(detailURL)
 }
 
 const play_gsc = (gsc) => {
-  if(!auto_play_lyric){
-    if(interval_id!=0){
+  if (!auto_play_lyric) {
+    if (interval_id != 0) {
       clear_interval(interval_id)
     }
     return false
@@ -279,39 +296,46 @@ const play_gsc = (gsc) => {
   try {
     if (tray && gsc) {
       tray.setToolTip(gsc.work_title + "·" + gsc.work_author)
-      let content_splits = (gsc.work_title + "|" + '【{0}】'.format(gsc.work_dynasty) + gsc.work_author + "|" + gsc.content).replace(/，|。|？|！|；|<\/br>/g, "|").replace(/\t|\n|\s|&emsp;|”|“/g, "").split("|")
+      let title_author = gsc.work_title + "　" + '【{0}】'.format(gsc.work_dynasty) + "　" + gsc.work_author
+      let contents = gsc.content.replace(/<\/br>|&emsp;/g, "")
       let start = 0
-      let new_splits = []
-      for (let i = 0; i < content_splits.length; i++) {
-        if (content_splits[i] != "") {
-          new_splits.push(content_splits[i])
-        }
-      }
-      let end = new_splits.length
+      let end = contents.length
       if (interval_id != 0) {
-        try{
+        try {
           clear_interval(interval_id)
-        }catch(e){
+        } catch (e) {
           log.error(e)
         }
       }
-      interval_id = setInterval(function(){
-        if (start >= end)
+      // 循环展示, 每次移动2个字，展示20个字
+      let play_width = 20
+      let content = ""
+      let from_head = true
+      let gap = play_width - title_author.length
+      if (gap > 1)
+        title_author = "　".repeat(parseInt(gap / 2)) + title_author + "　".repeat(parseInt(gap / 2))
+      interval_id = setInterval(()=> {
+        if (start + play_width > end + 1 && contents.length >= play_width) {
           start = 0
-        if (new_splits[start] != "") {
-          let first = new_splits[start]
-          let second = ""
-          if(start + 1 < end && new_splits[start+1].length > 0){
-            second = new_splits[start+1] + "  "
-          }
-          if(second == ""){
-            tray.setTitle(c.bgWhite.blue("  " + first + " "))
-          }else{
-            tray.setTitle(c.bgWhite.blue("  " + first )+ c.bgWhite.black.bold(" ~ ") + c.bgWhite.blue(second))
-          }
+          from_head = true
         }
-        start += 2
-      }, 2500)
+        if (from_head) {
+          tray.setTitle('\u001b[34m ' + title_author + "\u001b[0m")
+          from_head = false
+        } else {
+          content = contents.substr(start, play_width)
+          if (content.length < play_width) {
+            content += "　".repeat(play_width - content.length)
+            start = 0
+            from_head = true
+          } else {
+            from_head = false
+            start +=2
+          }
+          //tray.setTitle(c.bgWhite.blue(content))
+          tray.setTitle('\u001b[30;1m ' + content + '\u001b[0m')
+        }
+      }, 1000)
     }
   } catch (e) {
     log.error(e)
@@ -319,11 +343,11 @@ const play_gsc = (gsc) => {
 }
 
 // 显示小窗
-const send_show_gsc = (gsc_id, font, len, gsc) => {
-  detailWindow.webContents.send('to_get_gsc_detail', gsc_id, font, gsc)
+const send_show_gsc = (gsc_id, len, gsc) => {
+  detailWindow.webContents.send('to_get_gsc_detail', gsc_id, font_family, gsc)
   position = getDetailPosition()
   detailWindow.setPosition(position.x, position.y, true)
-  if(len > 0){
+  if (len > 0) {
     let calc_height = (len / 160) * 420 + 80
     detailWindow.setSize(320, Math.min(parseInt(calc_height), 420), true)
   }
@@ -337,10 +361,10 @@ const send_show_gsc = (gsc_id, font, len, gsc) => {
 
 app.on('ready', createWindow)
 
-app.on("quit", ()=>{
+app.on("quit", () => {
   if (interval_id != 0) {
     log.error("clear interval", interval_id)
-     clear_interval(interval_id)
+    clear_interval(interval_id)
   }
 })
 
@@ -508,6 +532,7 @@ const set_menu = () => {
                 }
                 writeFile(config_url, content);
                 show_dialog("songti")
+                font_family = "songti"
               }
             },
             {
@@ -521,6 +546,7 @@ const set_menu = () => {
                 }
                 writeFile(config_url, content);
                 show_dialog("kaiti")
+                font_family = "kaiti"
               }
             },
             {
@@ -534,6 +560,7 @@ const set_menu = () => {
                 }
                 writeFile(config_url, content);
                 show_dialog("songkai")
+                font_family = "songkai"
               }
             },
             {
@@ -547,6 +574,7 @@ const set_menu = () => {
                 }
                 writeFile(config_url, content);
                 show_dialog("heiti")
+                font_family = "heiti"
               }
             },
             {
@@ -560,6 +588,7 @@ const set_menu = () => {
                 }
                 writeFile(config_url, content);
                 show_dialog("NotoSansCJK")
+                font_family = "NotoSansCJK"
               }
             },
             {
@@ -573,12 +602,13 @@ const set_menu = () => {
                 }
                 writeFile(config_url, content);
                 show_dialog("huajieti")
+                font_family = "huajieti"
               }
             },
             {
               label: '游园体',
               type: 'radio',
-              checked: font_family == "huajieti",
+              checked: font_family == "youyuanti",
               accelerator: 'ctrl+shift+m',
               click: function () {
                 const content = {
@@ -586,6 +616,7 @@ const set_menu = () => {
                 }
                 writeFile(config_url, content);
                 show_dialog("youyuanti")
+                font_family = "youyuanti"
               }
             }
           ]
@@ -640,7 +671,7 @@ const set_menu = () => {
             }
             writeFile(config_url, content);
             auto_play_lyric = menu_item.checked
-            if(!auto_play_lyric && interval_id !=0){
+            if (!auto_play_lyric && interval_id != 0) {
               clear_interval(interval_id)
             }
             mainWindow.webContents.send('auto_play_lyric', menu_item.checked);

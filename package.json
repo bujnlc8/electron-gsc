@@ -56,7 +56,6 @@
     }
   },
   "dependencies": {
-    "ansi-colors": "^4.1.1",
     "axios": "^0.18.0",
     "chinese_convert": "^1.0.8",
     "electron-log": "^3.0.6",

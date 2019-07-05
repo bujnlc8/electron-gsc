@@ -516,7 +516,7 @@ export default {
           this.activeName = "";
       }
       if(ipcRenderer && this.current_gsc !== undefined){
-          ipcRenderer.send("currentht_gsc_a", this.current_gsc)
+        ipcRenderer.send("currentht_gsc_a", this.current_gsc)
       }
     },
     open_gsc(id_) {
@@ -567,10 +567,10 @@ export default {
       db.get(
       "SELECT * from gsc where `like` = 1 order by random() limit 1", (e, row)=>{
         if(!e && row){
-          ipcRenderer.send("received_gsc", row.id, this.$parent.myfont["font-family"], 
+          ipcRenderer.send("received_gsc", row.id, 
           row.content.length, this.do_content(row))
         }else{
-          ipcRenderer.send("received_gsc", parseInt(Math.random() * 8000), this.$parent.myfont["font-family"], 0, null)
+          ipcRenderer.send("received_gsc", parseInt(Math.random() * 8000), 0, null)
         }
       })
     })
@@ -578,10 +578,10 @@ export default {
       db.get(
       "SELECT * from gsc order by random() limit 1", (e, row)=>{
         if(!e && row){
-          ipcRenderer.send("received_gsc", row.id, this.$parent.myfont["font-family"], 
+          ipcRenderer.send("received_gsc", row.id, 
           row.content.length, this.do_content(row))
         }else{
-          ipcRenderer.send("received_gsc", parseInt(Math.random() * 8000), this.$parent.myfont["font-family"], 0, null)
+          ipcRenderer.send("received_gsc", parseInt(Math.random() * 8000), 0, null)
         }
       })
     })
