@@ -77,31 +77,39 @@ const beautifyGsc = (gsc_obj) => {
     } else {
         gsc_obj.short_content = gsc_obj.content.slice(0, period_index + 1);
     }
-    gsc_obj.short_content = gsc_obj.short_content.replace(/\\r|\\/g, "")
+    gsc_obj.short_content = gsc_obj.short_content.replace(/\\r|\\n/g, "")
     if (gsc_obj.layout == "indent") {
-        gsc_obj.content = gsc_obj.content.replace(/(\t|\n|\r)/g, "</br>&emsp;&emsp;");
+        gsc_obj.content = gsc_obj.content.replace(/\t|\n|\r/g, "</br>&emsp;&emsp;");
     } else {
-        gsc_obj.content = gsc_obj.content.replace(/(\t|\n|\r)/g, "</br>");
+        gsc_obj.content = gsc_obj.content.replace(/\t|\n|\r/g, "</br>");
     }
-    gsc_obj.content = gsc_obj.content.replace(/\\r|\\/g, "")
+    gsc_obj.content = gsc_obj.content.replace(/\\r|\\n/g, "")
     gsc_obj.translation = gsc_obj.translation.replace(
-        /(\t|\n|\r)/g,
+        /\t|\n|\r/g,
         "</br>&emsp;&emsp;"
     );
+    gsc_obj.translation = gsc_obj.translation.replace(/\\r|\\n/g, "");
     gsc_obj.annotation_ = gsc_obj.annotation_.replace(
-        /(\t|\n|\r)/g,
+        /\t|\n|\r/g,
+        "</br>&emsp;&emsp;"
+    );
+    gsc_obj.annotation_ = gsc_obj.annotation_.replace(/\\r|\\n/g, "");
+    gsc_obj.appreciation = gsc_obj.appreciation.replace(
+        /\t|\n|\r/g,
         "</br>&emsp;&emsp;"
     );
     gsc_obj.appreciation = gsc_obj.appreciation.replace(
-        /(\t|\n|\r)/g,
+        /\\r|\\n/g, ""
+    );
+    gsc_obj.master_comment = gsc_obj.master_comment.replace(
+        /\t|\n|\r/g,
         "</br>&emsp;&emsp;"
     );
     gsc_obj.master_comment = gsc_obj.master_comment.replace(
-        /(\t|\n|\r)/g,
-        "</br>&emsp;&emsp;"
+        /\\r|\\n/g, ""
     );
-    gsc_obj.intro = gsc_obj.intro.replace(/\n/g, "</br>&emsp;&emsp;");
-    gsc_obj.intro = gsc_obj.intro.replace(/\t/g, "</br>&emsp;&emsp;");
+    gsc_obj.intro = gsc_obj.intro.replace(/\n|\t/g, "</br>&emsp;&emsp;");
+    gsc_obj.intro = gsc_obj.intro.replace(/\\r|\\n/g, "");
     return gsc_obj
 }
 
