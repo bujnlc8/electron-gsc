@@ -125,15 +125,15 @@
           </div>
           <el-row v-if="current_gsc.audio_id > 0">
             <el-col :span="24">
-              <aplayer preload="none" theme="#93816d" :music="musicList" listMaxHeight="1"></aplayer>
+              <aplayer preload="none" theme="#93816d" :music="musicList" listMaxHeight="1" repeat="repeat-one"></aplayer>
             </el-col>
           </el-row>
           <el-tabs v-model="activeName" v-if="chinese == 'cn'">
             <el-tab-pane label="评析" name="intro" v-if="current_gsc.intro !=''">
               <div v-html="current_gsc.intro" class="indent"></div>
             </el-tab-pane>
-            <el-tab-pane label="注释" name="annotation" v-if="current_gsc.annotation!=''">
-              <div v-html="current_gsc.annotation" class="indent"></div>
+            <el-tab-pane label="注释" name="annotation_" v-if="current_gsc.annotation_!=''">
+              <div v-html="current_gsc.annotation_" class="indent"></div>
             </el-tab-pane>
             <el-tab-pane label="译文" name="translation" v-if="current_gsc.translation!=''">
               <div v-html="current_gsc.translation" class="indent"></div>
@@ -155,8 +155,8 @@
             <el-tab-pane label="評析" name="intro" v-if="current_gsc.intro !=''">
               <div v-html="current_gsc.intro" class="indent"></div>
             </el-tab-pane>
-            <el-tab-pane label="註釋" name="annotation" v-if="current_gsc.annotation!=''">
-              <div v-html="current_gsc.annotation" class="indent"></div>
+            <el-tab-pane label="註釋" name="annotation_" v-if="current_gsc.annotation_!=''">
+              <div v-html="current_gsc.annotation_" class="indent"></div>
             </el-tab-pane>
             <el-tab-pane label="譯文" name="translation" v-if="current_gsc.translation!=''">
               <div v-html="current_gsc.translation" class="indent"></div>
@@ -371,7 +371,7 @@ export default {
       gsc_obj.intro = jf_convert.cn2tw(gsc_obj.intro);
       gsc_obj.master_comment = jf_convert.cn2tw(gsc_obj.master_comment);
       gsc_obj.appreciation = jf_convert.cn2tw(gsc_obj.appreciation);
-      gsc_obj.annotation = jf_convert.cn2tw(gsc_obj.annotation);
+      gsc_obj.annotation_ = jf_convert.cn2tw(gsc_obj.annotation_);
       gsc_obj.translation = jf_convert.cn2tw(gsc_obj.translation);
       gsc_obj.foreword = jf_convert.cn2tw(gsc_obj.foreword);
     },
@@ -384,7 +384,7 @@ export default {
       gsc_obj.intro = jf_convert.tw2cn(gsc_obj.intro);
       gsc_obj.master_comment = jf_convert.tw2cn(gsc_obj.master_comment);
       gsc_obj.appreciation = jf_convert.tw2cn(gsc_obj.appreciation);
-      gsc_obj.annotation = jf_convert.tw2cn(gsc_obj.annotation);
+      gsc_obj.annotation_ = jf_convert.tw2cn(gsc_obj.annotation_);
       gsc_obj.translation = jf_convert.tw2cn(gsc_obj.translation);
       gsc_obj.foreword = jf_convert.tw2cn(gsc_obj.foreword);
     },
@@ -456,6 +456,7 @@ export default {
           if(this.filter_like){
             sql += " and `like` = 1 "
           }
+          sql += " order by work_title"
         }
         db.parallelize(function(){
             db.all(sql, [], function(e,row) {
@@ -504,8 +505,8 @@ export default {
         };
         if (this.current_gsc.intro.length > 0) {
           this.activeName = "intro";
-        } else if (this.current_gsc.annotation.length > 0) {
-          this.activeName = "annotation";
+        } else if (this.current_gsc.annotation_.length > 0) {
+          this.activeName = "annotation_";
         } else if (this.current_gsc.translation.length > 0) {
           this.activeName = "translation";
         } else if (this.current_gsc.appreciation.length > 0) {
@@ -691,6 +692,6 @@ export default {
 }
 .content {
   margin-top: 0.5em;
-  line-height: 1.6em;
+  line-height: 1.8em;
 }
 </style>

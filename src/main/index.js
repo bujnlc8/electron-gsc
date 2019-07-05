@@ -536,20 +536,6 @@ const set_menu = () => {
               }
             },
             {
-              label: '楷体',
-              type: 'radio',
-              checked: font_family == "kaiti",
-              accelerator: 'ctrl+shift+k',
-              click: function () {
-                const content = {
-                  "__font__": "kaiti"
-                }
-                writeFile(config_url, content);
-                show_dialog("kaiti")
-                font_family = "kaiti"
-              }
-            },
-            {
               label: '宋楷',
               type: 'radio',
               checked: font_family == "songkai",
@@ -617,6 +603,19 @@ const set_menu = () => {
                 writeFile(config_url, content);
                 show_dialog("youyuanti")
                 font_family = "youyuanti"
+              }
+            },{
+              label: '文悦仿宋',
+              type: 'radio',
+              checked: font_family == "wyuefs",
+              accelerator: 'ctrl+shift+k',
+              click: function () {
+                const content = {
+                  "__font__": "wyuefs"
+                }
+                writeFile(config_url, content);
+                show_dialog("wyuefs")
+                font_family = "wyuefs"
               }
             }
           ]

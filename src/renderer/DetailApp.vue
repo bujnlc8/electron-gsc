@@ -107,8 +107,8 @@ body {
   text-align: center;
 }
 @font-face {
-  font-family: "kaiti";
-  src: url("assets/kaiti.ttf");
+  font-family: "wyuefs";
+  src: url("assets/wyue.otf");
 }
 
 @font-face {

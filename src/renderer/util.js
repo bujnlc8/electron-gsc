@@ -25,8 +25,8 @@ const writeFile = (file_url, content) => {
 
 // 处理古诗词格式
 const beautifyGsc = (gsc_obj) => {
-    if (!gsc_obj.annotation) {
-        gsc_obj.annotation = ""
+    if (!gsc_obj.annotation_) {
+        gsc_obj.annotation_ = ""
     }
     if (!gsc_obj.appreciation) {
         gsc_obj.appreciation = ""
@@ -88,7 +88,7 @@ const beautifyGsc = (gsc_obj) => {
         /(\t|\n|\r)/g,
         "</br>&emsp;&emsp;"
     );
-    gsc_obj.annotation = gsc_obj.annotation.replace(
+    gsc_obj.annotation_ = gsc_obj.annotation_.replace(
         /(\t|\n|\r)/g,
         "</br>&emsp;&emsp;"
     );
