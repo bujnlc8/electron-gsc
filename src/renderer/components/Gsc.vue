@@ -81,9 +81,21 @@
       </el-aside>
       <el-container>
         <!---右半部分开始-->
-        <div id="detail-content" style="height:630px;overflow:scroll;">
-        <el-main v-if="current_gsc" style="margin-top:-10px;">
-          <div id="mycapture" style="padding:1.2em 2em;">
+        <div :style="myfontsize">
+          <div style="position:fixed;text-align:right;height:20px;width:51%;">
+            <div v-if="this.$parent.dark_mode !='dark'">
+              <span><img @click="change_font_size(-0.5)"  alt="缩小字体" style="height:14px;width:14px;" src="../assets/font_size_down.png"/></span>
+              <span><img @click="change_font_size(0)" alt="重置字体" style="height:15px;width:15px;" src="../assets/font_level.png"/></span>
+              <span><img @click="change_font_size(0.5)" alt="放大字体" style="height:16px;width:16px;" src="../assets/font_size_up.png"/></span>
+            </div>
+            <div v-if="this.$parent.dark_mode =='dark'">
+              <span><img @click="change_font_size(-0.5)"  alt="缩小字体" style="height:14px;width:14px;" src="../assets/font_size_down_light.png"/></span>
+              <span><img @click="change_font_size(0)" alt="重置字体" style="height:15px;width:15px;" src="../assets/font_level_light.png"/></span>
+              <span><img @click="change_font_size(0.5)" alt="放大字体" style="height:16px;width:16px;" src="../assets/font_size_up_light.png"/></span>
+            </div>
+          </div>
+        <el-main v-if="current_gsc" style="height:610px;overflow:scroll;padding:0.5em 1em 0.5em 1em;margin-top:20px;" id="detail-content">
+          <div id="mycapture" style="padding:12px;">
             <el-row class="content">
               <el-col :span="24">
                 <div style="text-align:center;font-size:1.3em;">
@@ -330,6 +342,7 @@ export default {
       is_liked: 0,
       filter_like: false,
       speech: false,
+      myfontsize: {"font-size": "16px"}
     };
   },
   watch:{
@@ -341,6 +354,14 @@ export default {
     this.search();
   },
   methods: {
+    change_font_size(size_change){
+        if(size_change==0){
+          this.myfontsize = {"font-size": "16px"}
+        }else{
+          let size = (parseFloat(this.myfontsize["font-size"].slice(0, -2)) + size_change) + "px"
+          this.myfontsize = {"font-size": size}
+        }
+    },
     operate_like_gsc(gsc_id, op){
       db.run("UPDATE gsc set like = ? WHERE id = ?", op, gsc_id, (e)=>{
         if(e){
@@ -608,6 +629,9 @@ export default {
         backgroundColor: color,
         ignoreElements: (item)=>{
           if(item.id ==="like-icon"){
+            return true
+          }
+          if(item.className == "el-icon-video-play" || item.className == "el-icon-video-pause"){
             return true
           }
           return false

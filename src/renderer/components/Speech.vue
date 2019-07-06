@@ -8,6 +8,7 @@
 </span>
 </template>
 <script>
+import { setTimeout } from 'timers';
 const speech_instance = new window.SpeechSynthesisUtterance()
 export default {
    data() {
@@ -59,6 +60,10 @@ export default {
        }
 
        speech_instance.onend = ()=>{
+           if(this.status != 3){
+                this.status = 3
+                this.do_speak()
+           }
            this.status = 3
        }
    }

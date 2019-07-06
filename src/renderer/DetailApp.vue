@@ -17,7 +17,7 @@
           />
         </span>
       </div>
-      <div v-if="gsc.work_dynasty" style="font-size:13px;text-align: center;">{{gsc.work_dynasty}}·{{gsc.work_author}}</div>
+      <div v-if="gsc.work_dynasty" style="font-size:0.95em;text-align: center;">{{gsc.work_dynasty}}·{{gsc.work_author}}</div>
       <div
         v-if="gsc.forword !==''"
         style="font-size:0.8em;font-style:italic;text-indent: 2em;"
