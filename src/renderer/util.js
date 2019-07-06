@@ -24,7 +24,7 @@ const writeFile = (file_url, content) => {
 }
 
 // 处理古诗词格式
-const beautifyGsc = (gsc_obj) => {
+const beautify_gsc = (gsc_obj) => {
     if (!gsc_obj.annotation_) {
         gsc_obj.annotation_ = ""
     }
@@ -115,5 +115,5 @@ const beautifyGsc = (gsc_obj) => {
 
 export {
     writeFile,
-    beautifyGsc
+    beautify_gsc
 }

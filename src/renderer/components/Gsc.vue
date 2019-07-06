@@ -92,6 +92,7 @@
                 <img  v-if="is_liked == 0" @click="operate_like_gsc(current_gsc.id, 1)" style="height:16px;width:16px;" src="../../../static/like.png"/>
                 <img  v-else-if="is_liked == 1" @click="operate_like_gsc(current_gsc.id, 0)"  style="height:16px;width:16px;" src="../../../static/liked.png"/>
                 </span>
+                <Speech :text='current_gsc.work_title + "，，，，" + current_gsc.work_dynasty + "，，，，"  + current_gsc.work_author + "，，，，" + current_gsc.foreword + "，，，，" +current_gsc.content'></Speech>
                 </div>
               </el-col>
             </el-row>
@@ -125,7 +126,7 @@
           </div>
           <el-row v-if="current_gsc.audio_id > 0">
             <el-col :span="24">
-              <aplayer preload="none" theme="#93816d" :music="musicList" listMaxHeight="1" repeat="repeat-one"></aplayer>
+              <aplayer :mutex="true" preload="none" theme="#93816d" :music="musicList" listMaxHeight="1" repeat="repeat-one"></aplayer>
             </el-col>
           </el-row>
           <el-tabs v-model="activeName" v-if="chinese == 'cn'">
@@ -182,8 +183,9 @@
 </template>
 <script>
 import { ApiUrl } from "../api.js";
-import {beautifyGsc} from "../util"
+import {beautify_gsc} from "../util"
 import Aplayer from "vue-aplayer";
+import Speech from "./Speech"
 import html2canvas from "html2canvas";
 const jf_convert = require("chinese_convert");
 const fs = require("fs");
@@ -310,7 +312,7 @@ window.addEventListener(
 
 export default {
   name: "Gsc",
-  components: { Aplayer },
+  components: { Aplayer, Speech },
   data() {
     return {
       input: "",
@@ -327,6 +329,7 @@ export default {
       offline_search: true,
       is_liked: 0,
       filter_like: false,
+      speech: false,
     };
   },
   watch:{
@@ -393,7 +396,7 @@ export default {
       this.search();
     },
     do_content(gsc_obj) {
-      beautifyGsc(gsc_obj)
+      beautify_gsc(gsc_obj)
       // 简繁转换
       if (this.chinese === "tw") {
         this.cn2twgsc(gsc_obj);

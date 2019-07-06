@@ -27,7 +27,7 @@
 </template>
 <script>
 import { ipcRenderer, remote } from "electron";
-import { beautifyGsc } from "./util";
+import { beautify_gsc } from "./util";
 const db = remote.getGlobal("__db__");
 const log = require("electron-log");
 export default {
@@ -72,11 +72,11 @@ export default {
       if (!gsc) {
         db.get("SELECT * from gsc where id = ?", this.gsc_id, (e, row) => {
           if (!e) {
-            this.gsc = beautifyGsc(row);
+            this.gsc = beautify_gsc(row);
           }
         });
       } else {
-        this.gsc = beautifyGsc(gsc);
+        this.gsc = beautify_gsc(gsc);
       }
     });
   }

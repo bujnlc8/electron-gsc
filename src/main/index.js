@@ -298,6 +298,9 @@ const play_gsc = (gsc) => {
       tray.setToolTip(gsc.work_title + "·" + gsc.work_author)
       let title_author = gsc.work_title + "　" + '【{0}】'.format(gsc.work_dynasty) + "　" + gsc.work_author
       let contents = gsc.content.replace(/<\/br>|&emsp;/g, "")
+      if(gsc.foreword.length > 0){
+        contents = (gsc.foreword + "　".repeat(2) + gsc.content).replace(/<\/br>|&emsp;/g, "")
+      }
       let start = 0
       let end = contents.length
       if (interval_id != 0) {
